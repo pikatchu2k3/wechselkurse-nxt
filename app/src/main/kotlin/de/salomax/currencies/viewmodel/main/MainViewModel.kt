@@ -24,6 +24,7 @@ import de.salomax.currencies.util.getSignificantDecimalPlaces
 import de.salomax.currencies.util.hasAppendedCurrencySymbol
 import de.salomax.currencies.util.toHumanReadableNumber
 import org.mariuszgromada.math.mxparser.Expression
+import java.math.BigDecimal
 import java.text.Collator
 import java.time.LocalDate
 import java.time.ZoneId
@@ -465,6 +466,9 @@ class MainViewModel(val app: Application, onlyCache: Boolean = false) : AndroidV
             // last input was an operator: replace "00" and "000" with "0"
             else if (currentCalculationValueText.value!!.split(" ").last().isEmpty() && (value == "00" || value == "000"))
                 currentCalculationValueText.value += 0
+            // last input was ")": mXparser doesn't support implied multiplication
+            else if (currentCalculationValueText.value!!.trim().lastOrNull() == ')')
+                currentCalculationValueText.value = currentCalculationValueText.value?.trim()?.plus(" \u00D7 $value")
             else
                 currentCalculationValueText.value += value
         }
@@ -569,6 +573,53 @@ class MainViewModel(val app: Application, onlyCache: Boolean = false) : AndroidV
             // add operator
             currentCalculationValueText.value = currentCalculationValueText.value?.trim().plus(" $operator ")
         }
+    }
+
+    internal fun addParenthesis(parenthesis: Char) {
+        // switch to calculation mode if necessary
+        if (!isInCalculationMode())
+            currentCalculationValueText.value = currentBaseValueText.value
+        val text = currentCalculationValueText.value?.trim()
+        when (parenthesis) {
+            '(' -> {
+                // mXparser doesn't support implied multiplication: "2 (3 + 4)" -> insert the operator
+                val last = text?.lastOrNull()
+                currentCalculationValueText.value =
+                    if (last?.isDigit() == true || last == '.' || last == ')')
+                        text?.plus(" \u00D7 (")
+                    else
+                        text?.plus(" (")
+            }
+            // only close the parenthesis, if there is an unmatched opening one that isn't empty
+            ')' ->
+                if (text != null
+                    && text.lastOrNull() != '('
+                    && text.count { it == '(' } > text.count { it == ')' }
+                )
+                    currentCalculationValueText.value = "$text )"
+        }
+    }
+
+    internal fun percent() {
+        // in calculation mode: divide the current value by 100 (mXparser uses "%" as modulo)
+        if (isInCalculationMode()) {
+            val text = currentCalculationValueText.value?.trim()
+            val last = text?.lastOrNull()
+            // only append after a number
+            if (last?.isDigit() == true || last == '.')
+                currentCalculationValueText.value = "$text \u00F7 100"
+        }
+        // divide the entered value by 100
+        else if (currentBaseValueText.value != "0" && currentBaseValueText.value?.isNotBlank() == true) {
+            currentBaseValueText.value = currentBaseValueText.value
+                ?.toBigDecimal()
+                ?.divide(BigDecimal(100))
+                ?.toPlainString()
+        }
+    }
+
+    internal fun addClear() {
+        clear()
     }
 
     /*

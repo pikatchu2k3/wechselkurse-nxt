@@ -87,6 +87,8 @@ class RatesListActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         updateSubtitle()
+        // rebind rows: pick up amounts edited via the "change amount" screen
+        adapter.refresh()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

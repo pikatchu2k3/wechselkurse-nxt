@@ -10,6 +10,7 @@ import com.google.android.material.imageview.ShapeableImageView
 import de.salomax.currencies.R
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
+import de.salomax.currencies.repository.Database
 import de.salomax.currencies.util.getSignificantDecimalPlaces
 import de.salomax.currencies.util.toHumanReadableNumber
 
@@ -36,6 +37,13 @@ class RatesListAdapter(private val onRowClick: (Currency) -> Unit) :
         val value = if (baseValue > 0.0) baseValue else 1.0
         if (this.baseValue == value) return
         this.baseValue = value
+        notifyDataSetChanged()
+    }
+
+    /**
+     * rebind all rows: e.g. to pick up edited amounts when returning from the "change amount" screen
+     */
+    fun refresh() {
         notifyDataSetChanged()
     }
 
@@ -80,8 +88,10 @@ class RatesListAdapter(private val onRowClick: (Currency) -> Unit) :
                     currency.iso4217Alpha()
                 )
 
-        val amount = (baseValue / baseRateValue * row.rate.value).toFloat()
         val amountPrefix = currency.symbol() ?: currency.unitLabel() ?: currency.iso4217Alpha()
+        // show the edited amount (set via the "change amount" screen), if present
+        val amount = Database(context).getEditedAmount(currency)?.toFloat()
+            ?: (baseValue / baseRateValue * row.rate.value).toFloat()
         holder.textAmount.text = context.getString(
             R.string.row_amount,
             amountPrefix,

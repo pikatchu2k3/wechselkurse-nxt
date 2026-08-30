@@ -35,7 +35,9 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import de.salomax.currencies.R
+import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
+import de.salomax.currencies.repository.Database
 import de.salomax.currencies.util.getDecimalSeparator
 import de.salomax.currencies.util.getLocale
 import de.salomax.currencies.util.toHumanReadableNumber
@@ -70,16 +72,33 @@ class MainActivity : BaseActivity() {
     private lateinit var tvInfoDate: TextView
     private lateinit var tvFee: TextView
 
+    // currency passed by the rates list: if present, this screen acts as a "change amount" calculator
+    private var tappedCurrency: Currency? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // general layout
         setContentView(R.layout.activity_main)
-        title = null
 
         // model
         this.viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         this.preferenceModel = ViewModelProvider(this)[PreferenceViewModel::class.java]
+
+        // "change amount" mode: the rates list tapped a currency to edit its amount
+        this.tappedCurrency = intent.getStringExtra(RatesListActivity.ARG_TAPPED_CURRENCY)
+            ?.let { Currency.fromString(it) }
+        if (this.tappedCurrency != null) {
+            title = getString(R.string.change_amount)
+            supportActionBar?.subtitle =
+                "${this.tappedCurrency!!.fullName(this)} (${this.tappedCurrency!!.iso4217Alpha()})"
+            // convert from the app's base to the tapped currency
+            viewModel.setDestinationCurrency(this.tappedCurrency!!)
+        } else {
+            title = null
+        }
+        // up navigation back to the rates list
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         // views
         this.refreshIndicator = findViewById(R.id.refreshIndicator)
@@ -196,6 +215,12 @@ class MainActivity : BaseActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    // up navigation: back to the rates list
+    override fun onSupportNavigateUp(): Boolean {
+        finish()
+        return true
     }
 
     override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo?) {
@@ -492,6 +517,43 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    /*
+     * keyboard: AC - clear everything
+     */
+    fun acEvent(@Suppress("UNUSED_PARAMETER") view: View) {
+        viewModel.addClear()
+    }
+
+    /*
+     * keyboard: parenthesis
+     */
+    fun parenEvent(view: View) {
+        viewModel.addParenthesis((view as AppCompatButton).text.toString().first())
+    }
+
+    /*
+     * keyboard: percent
+     */
+    fun percentEvent(@Suppress("UNUSED_PARAMETER") view: View) {
+        viewModel.percent()
+    }
+
+    /*
+     * keyboard: confirm - persist the current result as the edited amount of the tapped currency
+     */
+    fun confirmEvent(@Suppress("UNUSED_PARAMETER") view: View) {
+        confirmEditedAmount()
+    }
+
+    private fun confirmEditedAmount() {
+        this.tappedCurrency?.let { currency ->
+            viewModel.getResultAsNumber().value?.let {
+                Database(this).setEditedAmount(currency, it)
+            }
+        }
+        finish()
+    }
+
     // capture hardware keyboard input
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         // IMPORTANT: can't work with simple keyCodes here, as depending on the keyboard
@@ -517,11 +579,16 @@ class MainActivity : BaseActivity() {
             '-' -> viewModel.subtraction()
             '*' -> viewModel.multiplication()
             '/' -> viewModel.division()
+            // parentheses & percent
+            '(' -> viewModel.addParenthesis('(')
+            ')' -> viewModel.addParenthesis(')')
+            '%' -> viewModel.percent()
             else ->
                 // delete
                 when (keyCode) {
                     KeyEvent.KEYCODE_DEL -> viewModel.delete()
                     KeyEvent.KEYCODE_BACK -> super.onBackPressedDispatcher.onBackPressed()
+                    KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> confirmEditedAmount()
                     else -> return false
                 }
         }

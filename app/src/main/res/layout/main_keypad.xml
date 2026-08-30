@@ -14,6 +14,76 @@
         android:layoutDirection="ltr"
         tools:ignore="HardcodedText,UselessParent">
 
+        <!-- row 1: AC ( ) % ÷ -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_ac"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:onClick="acEvent"
+            android:text="AC"
+            android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
+            android:textColor="@color/color_keypad_operators"
+            app:layout_constraintBottom_toTopOf="@id/btn_7"
+            app:layout_constraintEnd_toStartOf="@id/btn_paren_open"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_paren_open"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:onClick="parenEvent"
+            android:text="("
+            android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
+            app:layout_constraintBottom_toBottomOf="@+id/btn_ac"
+            app:layout_constraintEnd_toStartOf="@id/btn_paren_close"
+            app:layout_constraintStart_toEndOf="@id/btn_ac"
+            app:layout_constraintTop_toTopOf="@+id/btn_ac" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_paren_close"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:onClick="parenEvent"
+            android:text=")"
+            android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
+            app:layout_constraintBottom_toBottomOf="@+id/btn_ac"
+            app:layout_constraintEnd_toStartOf="@id/btn_percent"
+            app:layout_constraintStart_toEndOf="@id/btn_paren_open"
+            app:layout_constraintTop_toTopOf="@+id/btn_ac" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_percent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:onClick="percentEvent"
+            android:text="%"
+            android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
+            android:textColor="@color/color_keypad_operators"
+            app:layout_constraintBottom_toBottomOf="@+id/btn_ac"
+            app:layout_constraintEnd_toStartOf="@id/btn_divide"
+            app:layout_constraintStart_toEndOf="@id/btn_paren_close"
+            app:layout_constraintTop_toTopOf="@+id/btn_ac" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btn_divide"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:onClick="calculationEvent"
+            android:text="÷"
+            android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
+            android:textColor="@color/color_keypad_operators"
+            app:layout_constraintBottom_toBottomOf="@+id/btn_ac"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btn_percent"
+            app:layout_constraintTop_toTopOf="@+id/btn_ac" />
+
+        <!-- row 2: 7 8 9 × -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_7"
             android:layout_width="0dp"
@@ -25,7 +95,7 @@
             app:layout_constraintBottom_toTopOf="@id/btn_4"
             app:layout_constraintEnd_toStartOf="@id/btn_8"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/btn_ac" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_8"
@@ -49,17 +119,17 @@
             android:text="9"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             app:layout_constraintBottom_toBottomOf="@+id/btn_7"
-            app:layout_constraintEnd_toStartOf="@id/btn_divide"
+            app:layout_constraintEnd_toStartOf="@id/btn_multiply"
             app:layout_constraintStart_toEndOf="@id/btn_8"
             app:layout_constraintTop_toTopOf="@+id/btn_7" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_divide"
+            android:id="@+id/btn_multiply"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="?selectableItemBackgroundBorderless"
             android:onClick="calculationEvent"
-            android:text="÷"
+            android:text="×"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             android:textColor="@color/color_keypad_operators"
             app:layout_constraintBottom_toBottomOf="@+id/btn_7"
@@ -67,6 +137,7 @@
             app:layout_constraintStart_toEndOf="@id/btn_9"
             app:layout_constraintTop_toTopOf="@+id/btn_7" />
 
+        <!-- row 3: 4 5 6 − -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_4"
             android:layout_width="0dp"
@@ -102,17 +173,17 @@
             android:text="6"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             app:layout_constraintBottom_toBottomOf="@+id/btn_4"
-            app:layout_constraintEnd_toStartOf="@id/btn_multiply"
+            app:layout_constraintEnd_toStartOf="@id/btn_subtract"
             app:layout_constraintStart_toEndOf="@id/btn_5"
             app:layout_constraintTop_toTopOf="@+id/btn_4" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_multiply"
+            android:id="@+id/btn_subtract"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="?selectableItemBackgroundBorderless"
             android:onClick="calculationEvent"
-            android:text="×"
+            android:text="−"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             android:textColor="@color/color_keypad_operators"
             app:layout_constraintBottom_toBottomOf="@+id/btn_4"
@@ -120,6 +191,7 @@
             app:layout_constraintStart_toEndOf="@id/btn_6"
             app:layout_constraintTop_toTopOf="@+id/btn_4" />
 
+        <!-- row 4: 1 2 3 + -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_1"
             android:layout_width="0dp"
@@ -155,17 +227,17 @@
             android:text="3"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             app:layout_constraintBottom_toBottomOf="@+id/btn_1"
-            app:layout_constraintEnd_toStartOf="@id/btn_subtract"
+            app:layout_constraintEnd_toStartOf="@id/btn_add"
             app:layout_constraintStart_toEndOf="@id/btn_2"
             app:layout_constraintTop_toTopOf="@+id/btn_1" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_subtract"
+            android:id="@+id/btn_add"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="?selectableItemBackgroundBorderless"
             android:onClick="calculationEvent"
-            android:text="−"
+            android:text="+"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             android:textColor="@color/color_keypad_operators"
             app:layout_constraintBottom_toBottomOf="@+id/btn_1"
@@ -173,6 +245,7 @@
             app:layout_constraintStart_toEndOf="@id/btn_3"
             app:layout_constraintTop_toTopOf="@+id/btn_1" />
 
+        <!-- row 5: 0 . ⌫ ↵ -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_0"
             android:layout_width="0dp"
@@ -208,18 +281,18 @@
             android:onClick="deleteEvent"
             android:src="@drawable/ic_backspace"
             app:layout_constraintBottom_toBottomOf="@+id/btn_0"
-            app:layout_constraintEnd_toStartOf="@id/btn_add"
+            app:layout_constraintEnd_toStartOf="@id/btn_confirm"
             app:layout_constraintStart_toEndOf="@id/btn_decimal"
             app:layout_constraintTop_toTopOf="@+id/btn_0"
             tools:ignore="ContentDescription" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btn_add"
+            android:id="@+id/btn_confirm"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="?selectableItemBackgroundBorderless"
-            android:onClick="calculationEvent"
-            android:text="+"
+            android:onClick="confirmEvent"
+            android:text="↵"
             android:textAppearance="@style/AppTheme.TextAppearance.Keypad"
             android:textColor="@color/color_keypad_operators"
             app:layout_constraintBottom_toBottomOf="@+id/btn_0"

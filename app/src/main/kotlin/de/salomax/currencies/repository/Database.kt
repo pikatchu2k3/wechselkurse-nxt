@@ -159,6 +159,27 @@ class Database(context: Context) {
     }
 
     /*
+     * edited amounts ==============================================================================
+     */
+    private val prefsEditedAmounts: SharedPreferences = context.getSharedPreferences("edited_amounts", MODE_PRIVATE)
+
+    /**
+     * the amount for a currency, as manually edited via the "change amount" screen
+     * (null removes the edited amount)
+     */
+    fun setEditedAmount(currency: Currency, amount: Double?) {
+        val key = "edited_${currency.iso4217Alpha()}"
+        if (amount == null)
+            prefsEditedAmounts.edit().remove(key).apply()
+        else
+            prefsEditedAmounts.edit().putString(key, amount.toString()).apply()
+    }
+
+    fun getEditedAmount(currency: Currency): Double? {
+        return prefsEditedAmounts.getString("edited_${currency.iso4217Alpha()}", null)?.toDoubleOrNull()
+    }
+
+    /*
      * preferences =================================================================================
      */
     private val prefs: SharedPreferences = context.getSharedPreferences("prefs", MODE_PRIVATE)
