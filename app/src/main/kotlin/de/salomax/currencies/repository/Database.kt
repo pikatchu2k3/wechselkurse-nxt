@@ -13,6 +13,14 @@ import java.time.LocalDate
 
 class Database(context: Context) {
 
+    companion object {
+        /**
+         * the currencies the list starts with on first launch, before the user adds their own
+         * (also seeded into the starred set, see [seedDefaultStars])
+         */
+        val DEFAULT_CURRENCIES: Set<Currency> = setOf(Currency.EUR, Currency.USD)
+    }
+
     /*
      * current exchange rates from api =============================================================
      */
@@ -47,6 +55,14 @@ class Database(context: Context) {
 
     fun getDate(): LocalDate? {
         return prefsRates.getString(keyDate, null)?.let { LocalDate.parse(it) }
+    }
+
+    /**
+     * the currency the cached exchange rates are based on
+     * (the "home" row of the rates list, e.g. EUR)
+     */
+    fun getHomeCurrency(): Currency? {
+        return prefsRates.getString(keyBaseRate, null)?.let { Currency.fromString(it) }
     }
 
     /*
@@ -109,6 +125,22 @@ class Database(context: Context) {
 
     private val keyStars = "_stars"
     private val keyStarredEnabled = "_starredActive"
+    private val keyStarsInitialized = "_starsInitialized"
+
+    /**
+     * first launch: pre-select the default currency set (EUR + USD), so the list starts small
+     * and everything else can be added via the add-currency flow.
+     * Runs only once: an empty starred set afterwards is the user's deliberate choice.
+     */
+    fun seedDefaultStars() {
+        if (prefsStarredCurrencies.getBoolean(keyStarsInitialized, false)) return
+        val editor = prefsStarredCurrencies.edit()
+        editor.putBoolean(keyStarsInitialized, true)
+        // only seed if the user has never chosen any stars
+        if (prefsStarredCurrencies.getStringSet(keyStars, HashSet<String>())!!.isEmpty())
+            editor.putStringSet(keyStars, DEFAULT_CURRENCIES.map { it.iso4217Alpha() }.toSet())
+        editor.apply()
+    }
 
     fun toggleCurrencyStar(currency: Currency) {
         prefsStarredCurrencies.apply {
@@ -177,6 +209,32 @@ class Database(context: Context) {
 
     fun getEditedAmount(currency: Currency): Double? {
         return prefsEditedAmounts.getString("edited_${currency.iso4217Alpha()}", null)?.toDoubleOrNull()
+    }
+
+    /*
+     * base value ==================================================================================
+     */
+    private val keyBaseValue = "_base_value"
+
+    /**
+     * the amount of the home currency that all row amounts of the rates list are derived from.
+     * Edited by confirming an amount on the home row (null removes it -> default 1.0)
+     */
+    fun setBaseValue(value: Double?) {
+        if (value == null)
+            prefsLastState.edit().remove(keyBaseValue).apply()
+        else
+            prefsLastState.edit().putString(keyBaseValue, value.toString()).apply()
+    }
+
+    fun getBaseValue(): Double? {
+        return prefsLastState.getString(keyBaseValue, null)?.toDoubleOrNull()
+    }
+
+    fun getBaseValueAsLiveData(): LiveData<Double> {
+        return SharedPreferenceStringLiveData(prefsLastState, keyBaseValue, "1.0").map {
+            it?.toDoubleOrNull() ?: 1.0
+        }
     }
 
     /*

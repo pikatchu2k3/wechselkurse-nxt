@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.ExchangeRates
 import de.salomax.currencies.model.Rate
+import de.salomax.currencies.repository.Database
 import java.time.LocalDate
 
 class RatesListViewModel(app: Application) : AndroidViewModel(app) {
@@ -26,7 +27,14 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
         val rates: List<Rate>
     )
 
-    private val mainViewModel = MainViewModel(app)
+    private val mainViewModel: MainViewModel
+
+    init {
+        // first launch: the list starts with the default set (EUR + USD only),
+        // everything else is added via the add-currency flow
+        Database(app).seedDefaultStars()
+        mainViewModel = MainViewModel(app)
+    }
 
     private val rows = object : MediatorLiveData<Rows>() {
         var exchangeRates: ExchangeRates? = null
@@ -42,8 +50,9 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
             val starredCurrencies = starred
             value = Rows(
                 base = exchangeRates?.base,
+                // nothing starred (yet): show only the default set, never all rates
                 rates = if (starredCurrencies.isNullOrEmpty())
-                    allRates
+                    allRates.filter { it.currency in Database.DEFAULT_CURRENCIES }
                 else
                     allRates.filter { it.currency in starredCurrencies }
             )
@@ -70,8 +79,12 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
         mainViewModel.forceUpdateExchangeRate()
     }
 
+    /**
+     * the persisted base value that all row amounts are derived from (default 1.0).
+     * Edited by confirming an amount on the home row
+     */
     fun getCurrentBaseValueAsNumber(): LiveData<Double> {
-        return mainViewModel.getCurrentBaseValueAsNumber()
+        return Database(getApplication()).getBaseValueAsLiveData()
     }
 
     fun getStarredCurrencies(): LiveData<Set<Currency>> {

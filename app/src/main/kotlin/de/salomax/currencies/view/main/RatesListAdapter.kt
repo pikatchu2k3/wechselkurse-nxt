@@ -73,25 +73,35 @@ class RatesListAdapter(private val onRowClick: (Currency) -> Unit) :
         holder.textName.text = currency.fullName(context)
         holder.imageHome.visibility = if (row.isHome) View.VISIBLE else View.GONE
 
+        val amountPrefix = currency.symbol() ?: currency.unitLabel() ?: currency.iso4217Alpha()
+        // the home row always shows the current base value; other rows show the edited amount
+        // (set via the "change amount" screen), if present, else the base-value-derived amount
+        val amount = if (row.isHome)
+            baseValue.toFloat()
+        else
+            Database(context).getEditedAmount(currency)?.toFloat()
+                ?: (baseValue / baseRateValue * row.rate.value).toFloat()
+
         holder.textSubtitle.text =
             if (row.isHome)
                 currency.iso4217Alpha()
             else
                 context.getString(
                     R.string.row_conversion,
-                    baseCurrency?.iso4217Alpha() ?: "",
-                    row.rate.value.toHumanReadableNumber(
+                    baseValue.toFloat().toHumanReadableNumber(
                         context,
-                        decimalPlaces = row.rate.value.getSignificantDecimalPlaces(4),
+                        decimalPlaces = baseValue.toFloat().getSignificantDecimalPlaces(4),
+                        trim = true
+                    ),
+                    baseCurrency?.iso4217Alpha() ?: "",
+                    amount.toHumanReadableNumber(
+                        context,
+                        decimalPlaces = amount.getSignificantDecimalPlaces(3),
                         trim = true
                     ),
                     currency.iso4217Alpha()
                 )
 
-        val amountPrefix = currency.symbol() ?: currency.unitLabel() ?: currency.iso4217Alpha()
-        // show the edited amount (set via the "change amount" screen), if present
-        val amount = Database(context).getEditedAmount(currency)?.toFloat()
-            ?: (baseValue / baseRateValue * row.rate.value).toFloat()
         holder.textAmount.text = context.getString(
             R.string.row_amount,
             amountPrefix,

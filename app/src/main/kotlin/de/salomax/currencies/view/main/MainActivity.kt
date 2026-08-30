@@ -92,6 +92,9 @@ class MainActivity : BaseActivity() {
             title = getString(R.string.change_amount)
             supportActionBar?.subtitle =
                 "${this.tappedCurrency!!.fullName(this)} (${this.tappedCurrency!!.iso4217Alpha()})"
+            // the home row is the editable base value: the amount is entered directly in the home currency
+            if (this.tappedCurrency == Database(this).getHomeCurrency())
+                viewModel.setBaseCurrency(this.tappedCurrency!!)
             // convert from the app's base to the tapped currency
             viewModel.setDestinationCurrency(this.tappedCurrency!!)
         } else {
@@ -547,8 +550,14 @@ class MainActivity : BaseActivity() {
 
     private fun confirmEditedAmount() {
         this.tappedCurrency?.let { currency ->
-            viewModel.getResultAsNumber().value?.let {
-                Database(this).setEditedAmount(currency, it)
+            viewModel.getResultAsNumber().value?.let { amount ->
+                val database = Database(this)
+                // confirming the home row sets the base value that scales ALL rows of the rates list
+                if (currency == database.getHomeCurrency())
+                    database.setBaseValue(amount)
+                // any other row: persist the per-currency edited amount
+                else
+                    database.setEditedAmount(currency, amount)
             }
         }
         finish()
