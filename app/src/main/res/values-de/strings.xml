@@ -24,6 +24,7 @@
     <string name="menu_converter">Umrechner</string>
 
     <string name="rates_list_title">Wechselkurse</string>
+    <string name="name_xbz">Rohöl (Brent)</string>
     <string name="updated_just_now">Aktualisiert: gerade eben</string>
     <string name="updated_x_minutes_ago">Aktualisiert: vor %1$d Min.</string>
     <string name="updated_x_hours_ago">Aktualisiert: vor %1$d Std.</string>
