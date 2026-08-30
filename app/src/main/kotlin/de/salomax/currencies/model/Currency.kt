@@ -13,7 +13,8 @@ enum class Currency(
     private val iso4217Numeric: Int?,  // 840
     private val symbol: String?,       // $
     private val fullName: Int,         // US dollar
-    private val flag: Int?             // vector drawable: star-spangled banner
+    private val flag: Int?,            // vector drawable: star-spangled banner
+    private val unitLabel: String? = null // "oz t" (troy ounce), "bbl" (barrel) - only for non-flag assets
 ) {
     AED("AED", 784,  "د.إ",  R.string.name_aed, R.drawable.flag_ae),
     AFN("AFN", 971,  "؋",    R.string.name_afn, R.drawable.flag_af),
@@ -36,7 +37,7 @@ enum class Currency(
     BOB("BOB", 68,   "Bs.",  R.string.name_bob, R.drawable.flag_bo),
     BRL("BRL", 986,  "R$",   R.string.name_brl, R.drawable.flag_br),
     BSD("BSD", 44,   "$",    R.string.name_bsd, R.drawable.flag_bs),
-    BTC("BTC", null, "₿",    R.string.name_btc, null),
+    BTC("BTC", null, "₿",    R.string.name_btc, null, "₿"),
     BTN("BTN", 64,   "Nu.",  R.string.name_btn, R.drawable.flag_bt),
     BWP("BWP", 72,   "P",    R.string.name_bwp, R.drawable.flag_bw),
     BYN("BYN", 933,  "Br",   R.string.name_byn, R.drawable.flag_by),
@@ -176,14 +177,16 @@ enum class Currency(
     VUV("VUV", 548,  "Vt",   R.string.name_vuv, R.drawable.flag_vu),
     WST("WST", 882,  "T",    R.string.name_wst, R.drawable.flag_ws),
     XAF("XAF", 950,  "Fr",   R.string.name_xaf, null),
-    XAG("XAG", 961,  null,   R.string.name_xag, null),
-    XAU("XAU", 959,  null,   R.string.name_xau, null),
+    XAG("XAG", 961,  null,   R.string.name_xag, null, "oz t"),
+    XAU("XAU", 959,  null,   R.string.name_xau, null, "oz t"),
+    // crude oil (Brent) - pseudo-code, not a real ISO 4217 currency
+    XBZ("XBZ", null, null,   R.string.name_xbz, null, "bbl"),
     XCD("XCD", 951,  "$",    R.string.name_xcd, null),
     XDR("XDR", 960,  null,   R.string.name_xdr, null),
     XOF("XOF", 952,  "Fr",   R.string.name_xof, null),
-    XPD("XPD", 964,  null,   R.string.name_xpd, null),
+    XPD("XPD", 964,  null,   R.string.name_xpd, null, "oz t"),
     XPF("XPF", 953,  "₣",    R.string.name_xpf, null),
-    XPT("XPT", 962,  null,   R.string.name_xpt, null),
+    XPT("XPT", 962,  null,   R.string.name_xpt, null, "oz t"),
     YER("YER", 886,  "ر.ي",  R.string.name_yer, R.drawable.flag_ye),
     ZAR("ZAR", 710,  "R",    R.string.name_zar, R.drawable.flag_za),
     ZMW("ZMW", 967,  "ZK",   R.string.name_zmw, R.drawable.flag_zm),
@@ -192,11 +195,8 @@ enum class Currency(
     companion object {
         fun fromString(value: String): Currency? =
             // filter out these:
-            if (value != "BTC"    // Bitcoin
-                // metals
-                && value != "XAG" // silver
-                && value != "XAU" // gold
-                && value != "XPD" // palladium
+            // metals (no free data source)
+            if (value != "XPD" // palladium
                 && value != "XPT" // platinum
                 // superseded
                 && value != "MRO" // Mauritanian ouguiya         (until 2018/01/01)
@@ -242,6 +242,31 @@ enum class Currency(
      */
     fun flag(context: Context): Drawable {
         return ContextCompat.getDrawable(context, this.flag ?: R.drawable.flag_unknown)!!
+    }
+
+    /**
+     * like [flag], but returns a meaningful icon for non-flag assets instead of the gray
+     * flag_unknown globe: e.g. a bitcoin mark for BTC, a gold bar for XAU, an oil barrel for XBZ
+     */
+    @Suppress("unused")
+    fun icon(context: Context): Drawable {
+        val drawable: Int = when (this) {
+            BTC -> R.drawable.img_asset_bitcoin
+            XAU -> R.drawable.img_asset_gold
+            XAG -> R.drawable.img_asset_silver
+            XBZ -> R.drawable.img_asset_oil
+            else -> this.flag ?: R.drawable.flag_unknown
+        }
+        return ContextCompat.getDrawable(context, drawable)!!
+    }
+
+    /**
+     * unit label for non-flag assets, e.g. "oz t" (troy ounce) for XAU, "bbl" (barrel) for XBZ,
+     * or null for plain fiat currencies
+     */
+    @Suppress("unused")
+    fun unitLabel(): String? {
+        return this.unitLabel
     }
 
     /**

@@ -32,4 +32,6 @@
 
     <string name="tooltip_filter_starred">Show only starred currencies.</string>
     <string name="currency_dropdown_api_hint">Something missing? Different data providers offer different currencies. Go to the settings to try another one!\u00A0\uD83E\uDD17</string>
+
+    <string name="name_xbz">Crude oil (Brent)</string>
 </resources>
