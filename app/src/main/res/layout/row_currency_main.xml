@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:selectableItemBackground"
+    android:clickable="true"
+    android:descendantFocusability="blocksDescendants"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:paddingVertical="@dimen/margin2x"
+    android:paddingStart="@dimen/margin3x"
+    android:paddingEnd="@dimen/margin3x"
+    tools:ignore="UseCompoundDrawables">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/image"
+        android:layout_width="48dp"
+        android:layout_height="34dp"
+        android:layout_gravity="center"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/AppTheme.FlagRoundedCorners"
+        tools:ignore="ContentDescription"
+        tools:src="@drawable/flag_us" />
+
+    <TextView
+        android:id="@+id/textAmount"
+        style="@style/TextAppearance.Material3.TitleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textDirection="ltr"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Fr. 2,51" />
+
+    <ImageView
+        android:id="@+id/imageHome"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="4dp"
+        android:alpha=".7"
+        android:src="@drawable/ic_home"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textAmount"
+        tools:ignore="ContentDescription"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/textName"
+        style="@style/TextAppearance.Material3.TitleLarge"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin2x"
+        android:layout_marginEnd="@dimen/margin1x"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textDirection="locale"
+        app:layout_constraintEnd_toStartOf="@id/textAmount"
+        app:layout_constraintStart_toEndOf="@id/image"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Schweizer Franken" />
+
+    <TextView
+        android:id="@+id/textSubtitle"
+        style="@style/TextAppearance.Material3.BodyMedium"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin2x"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="@dimen/margin1x"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="?android:attr/textColorTertiary"
+        android:textDirection="ltr"
+        app:layout_constraintEnd_toStartOf="@id/textAmount"
+        app:layout_constraintStart_toEndOf="@id/image"
+        app:layout_constraintTop_toBottomOf="@id/textName"
+        tools:text="1 EUR = 0,9285 CHF" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

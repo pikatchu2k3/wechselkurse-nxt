@@ -21,6 +21,16 @@
     <string name="menu_settings">Einstellungen</string>
     <string name="menu_refresh">Kurse aktualisieren</string>
     <string name="menu_timeline">Wechselkursverlauf</string>
+    <string name="menu_converter">Umrechner</string>
+
+    <string name="rates_list_title">Wechselkurse</string>
+    <string name="updated_just_now">Aktualisiert: gerade eben</string>
+    <string name="updated_x_minutes_ago">Aktualisiert: vor %1$d Min.</string>
+    <string name="updated_x_hours_ago">Aktualisiert: vor %1$d Std.</string>
+    <string name="change_amount">Betrag ändern</string>
+    <string name="add_currency">Währung hinzufügen</string>
+    <string name="row_conversion">1 %1$s = %2$s %3$s</string>
+    <string name="row_amount">%1$s %2$s</string>
     <string name="tooltip_filter_starred">Nur favorisierte Währungen anzeigen.</string>
     <string name="currency_dropdown_api_hint">Fehlt etwas? Unterschiedliche Datenquellen bieten unterschiedliche Währungen an. In die Einstellungen gehen, um eine andere auszuprobieren!\u00A0\uD83E\uDD17</string>
 </resources>

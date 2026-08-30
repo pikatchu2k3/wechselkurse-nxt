@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:orderInCategory="0"
+        android:id="@+id/action_add"
+        android:icon="@drawable/ic_add"
+        android:title="@string/add_currency"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:orderInCategory="1"
+        android:id="@+id/refresh"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/menu_refresh"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:orderInCategory="10"
+        android:id="@+id/settings"
+        android:title="@string/menu_settings"
+        app:showAsAction="never" />
+
+    <item
+        android:orderInCategory="11"
+        android:id="@+id/converter"
+        android:title="@string/menu_converter"
+        app:showAsAction="never" />
+
+    <item
+        android:orderInCategory="12"
+        android:id="@+id/date_picker"
+        android:title="@string/menu_historical_rates"
+        app:showAsAction="never" />
+</menu>

@@ -13,13 +13,17 @@
         android:theme="@style/AppTheme"
         tools:ignore="UnusedAttribute">
         <activity
-            android:name=".view.main.MainActivity"
+            android:name=".view.main.RatesListActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".view.main.MainActivity"
+            android:exported="false"
+            android:parentActivityName=".view.main.RatesListActivity" />
         <activity android:name=".view.preference.PreferenceActivity" />
         <activity android:name=".view.timeline.TimelineActivity" />
 
