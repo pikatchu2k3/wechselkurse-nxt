@@ -24,6 +24,12 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
 
     data class Rows(
         val base: Currency?,
+        /**
+         * the actual stored rate value of [base], taken from the full (unfiltered) rate list.
+         * Basis for the row-amount conversion - a fallback of 1f is only correct for an
+         * EUR-based snapshot (where EUR's value is 1.0 by definition)
+         */
+        val baseRateValue: Float,
         val rates: List<Rate>
     )
 
@@ -49,7 +55,14 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
             val allRates = exchangeRates?.rates ?: return
             val starredCurrencies = starred
             value = Rows(
-                base = exchangeRates?.base,
+                // the home row is always the rate-source base EUR: every stored rate value
+                // follows the "1 EUR = X units" convention (Phase 5b/6), so the persisted
+                // "_base" string must never decide the home row - a stale snapshot can
+                // still carry a foreign base (e.g. USD), which would misplace the home
+                // row and collapse all amounts
+                base = Currency.EUR,
+                baseRateValue = allRates.find { it.currency == Currency.EUR }
+                    ?.value?.takeIf { it != 0f } ?: 1f,
                 // nothing starred (yet): show only the default set, never all rates
                 rates = if (starredCurrencies.isNullOrEmpty())
                     allRates.filter { it.currency in Database.DEFAULT_CURRENCIES }

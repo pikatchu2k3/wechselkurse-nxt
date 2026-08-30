@@ -240,7 +240,7 @@ class RatesListActivity : BaseActivity() {
     private fun observe() {
         // rows changed
         viewModel.getRows().observe(this) {
-            adapter.setItems(it.rates, it.base)
+            adapter.setItems(it.rates, it.base, it.baseRateValue)
             updateSubtitle()
         }
 

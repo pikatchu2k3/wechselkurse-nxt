@@ -58,11 +58,13 @@ class Database(context: Context) {
     }
 
     /**
-     * the currency the cached exchange rates are based on
-     * (the "home" row of the rates list, e.g. EUR)
+     * the home currency of the rates list.
+     * Always EUR: the rate-source base every stored rate value relates to
+     * ("1 EUR = X units") - regardless of what the (possibly stale) cached
+     * snapshot's "_base" string says
      */
     fun getHomeCurrency(): Currency? {
-        return prefsRates.getString(keyBaseRate, null)?.let { Currency.fromString(it) }
+        return Currency.EUR
     }
 
     /*

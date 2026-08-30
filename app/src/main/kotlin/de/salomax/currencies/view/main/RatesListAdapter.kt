@@ -24,12 +24,12 @@ class RatesListAdapter(private val onRowClick: (Currency) -> Unit) :
     private var baseRateValue: Float = 1f
     private var baseValue: Double = 1.0
 
-    fun setItems(rates: List<Rate>, baseCurrency: Currency?) {
+    fun setItems(rates: List<Rate>, baseCurrency: Currency?, baseRateValue: Float) {
         this.rows = rates.map { Row(it, it.currency == baseCurrency) }
         this.baseCurrency = baseCurrency
-        this.baseRateValue = rates.find { it.currency == baseCurrency }?.value
-            ?.takeIf { it != 0f }
-            ?: 1f
+        // the true stored value of the base currency (from the full snapshot) - never
+        // derived from the (star-filtered) rows, where the base may be missing entirely
+        this.baseRateValue = baseRateValue.takeIf { it != 0f } ?: 1f
         notifyDataSetChanged()
     }
 
