@@ -10,7 +10,9 @@ import android.view.View
 import android.widget.DatePicker
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SearchView
 import androidx.core.text.HtmlCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -139,18 +141,48 @@ class RatesListActivity : BaseActivity() {
 
     private fun showAddCurrencyDialog() {
         val rates = viewModel.getExchangeRates().value?.rates ?: return
-        val starred = viewModel.getStarredCurrencies().value ?: emptySet()
-        val currencies = rates.map { it.currency }.toTypedArray()
-        val labels = currencies.map { "${it.fullName(this)} (${it.iso4217Alpha()})" }.toTypedArray()
-        val checked = currencies.map { it in starred }.toBooleanArray()
 
-        AlertDialog.Builder(this)
-            .setTitle(R.string.add_currency)
-            .setMultiChoiceItems(labels, checked) { _, which, _ ->
-                viewModel.toggleCurrencyStar(currencies[which])
+        // view
+        val view = layoutInflater.inflate(R.layout.dialog_add_currency, null)
+        val searchView: SearchView = view.findViewById(R.id.searchView)
+        val listView: RecyclerView = view.findViewById(R.id.listView)
+
+        // list: grouped into currencies/metals/crypto/commodities + live search
+        val adapter = AddCurrencyDialogAdapter(this)
+        listView.layoutManager = LinearLayoutManager(this)
+        listView.adapter = adapter
+        adapter.onItemToggled = { currency -> viewModel.toggleCurrencyStar(currency) }
+        adapter.setRates(rates)
+
+        // keep the selected state in sync while the dialog is open
+        val starObserver = Observer<Set<Currency>> { adapter.setStars(it) }
+        viewModel.getStarredCurrencies().observe(this, starObserver)
+
+        // live search: filter as the user types
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextChange(query: String?): Boolean {
+                adapter.filter(query)
+                return true
             }
+
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+                return true
+            }
+        })
+        searchView.clearFocus()
+
+        // build dialog
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.add_currency)
+            .setView(view)
             .setPositiveButton(android.R.string.ok, null)
-            .show()
+            .create()
+        // the rates list re-renders on its own (it observes stars via getRows())
+        dialog.setOnDismissListener {
+            viewModel.getStarredCurrencies().removeObserver(starObserver)
+        }
+        dialog.show()
     }
 
     private fun showHistoricalDateDialog() {

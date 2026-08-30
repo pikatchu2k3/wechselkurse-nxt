@@ -30,6 +30,11 @@
     <string name="updated_x_hours_ago">Aktualisiert: vor %1$d Std.</string>
     <string name="change_amount">Betrag ändern</string>
     <string name="add_currency">Währung hinzufügen</string>
+    <string name="add_currency_search_hint">Suchen</string>
+    <string name="add_currency_section_currencies">Währungen</string>
+    <string name="add_currency_section_metals">Edelmetalle</string>
+    <string name="add_currency_section_crypto">Krypto</string>
+    <string name="add_currency_section_commodities">Rohstoffe</string>
     <string name="row_conversion">%1$s %2$s = %3$s %4$s</string>
     <string name="row_amount">%1$s %2$s</string>
     <string name="tooltip_filter_starred">Nur favorisierte Währungen anzeigen.</string>
