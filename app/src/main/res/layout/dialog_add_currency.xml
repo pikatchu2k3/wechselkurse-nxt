@@ -9,17 +9,92 @@
     android:orientation="vertical"
     android:paddingTop="@dimen/margin1x">
 
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/searchView"
+    <!-- category tabs: only the selected category's entries are shown below -->
+    <HorizontalScrollView
+        android:id="@+id/chipScroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:iconifiedByDefault="false"
-        app:queryHint="@string/add_currency_search_hint" />
+        android:clipToPadding="false"
+        android:paddingHorizontal="@dimen/margin1x"
+        android:scrollbars="none">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/listView"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCurrencies"
+                style="@style/AppTheme.Chip.Category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/add_currency_section_currencies" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCrypto"
+                style="@style/AppTheme.Chip.Category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_currency_section_crypto" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCommodities"
+                style="@style/AppTheme.Chip.Category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_currency_section_commodities" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipMetals"
+                style="@style/AppTheme.Chip.Category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_currency_section_metals" />
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="vertical"
-        tools:listitem="@layout/row_currency_dropdown" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="72dp"
+            android:scrollbars="vertical"
+            tools:listitem="@layout/row_currency_dropdown" />
+
+        <!-- hidden until the search FAB is tapped; filters the selected category live -->
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/margin1x"
+            android:layout_marginTop="@dimen/margin1x"
+            android:layout_marginEnd="@dimen/margin1x"
+            android:background="@drawable/bg_search_field"
+            android:elevation="@dimen/elevation2x"
+            android:visibility="gone"
+            app:iconifiedByDefault="false"
+            app:queryHint="@string/add_currency_search_hint"
+            tools:visibility="visible" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/margin2x"
+            android:contentDescription="@string/add_currency_search_hint"
+            android:src="@drawable/ic_search"
+            app:fabSize="mini"
+            app:tint="?attr/colorOnPrimary" />
+    </FrameLayout>
 </LinearLayout>

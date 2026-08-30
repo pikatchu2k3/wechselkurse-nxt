@@ -122,4 +122,11 @@
         <item name="cornerSize">4dp</item>
     </style>
 
+    <!-- category tabs of the add-currency dialog: checked = filled primary, unchecked = outlined surface -->
+    <style name="AppTheme.Chip.Category" parent="Widget.Material3.Chip.Filter">
+        <item name="android:checkable">true</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="closeIconVisible">false</item>
+    </style>
+
 </resources>

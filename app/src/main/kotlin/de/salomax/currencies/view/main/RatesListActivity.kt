@@ -17,7 +17,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -140,21 +143,54 @@ class RatesListActivity : BaseActivity() {
 
         // view
         val view = layoutInflater.inflate(R.layout.dialog_add_currency, null)
+        val chipGroup: ChipGroup = view.findViewById(R.id.chipGroup)
         val searchView: SearchView = view.findViewById(R.id.searchView)
+        val btnSearch: FloatingActionButton = view.findViewById(R.id.btnSearch)
         val listView: RecyclerView = view.findViewById(R.id.listView)
 
-        // list: grouped into currencies/metals/crypto/commodities + live search
+        // list: only the selected category's entries + live search
         val adapter = AddCurrencyDialogAdapter(this)
         listView.layoutManager = LinearLayoutManager(this)
         listView.adapter = adapter
         adapter.onItemToggled = { currency -> viewModel.toggleCurrencyStar(currency) }
         adapter.setRates(rates)
 
-        // keep the selected state in sync while the dialog is open
-        val starObserver = Observer<Set<Currency>> { adapter.setStars(it) }
-        viewModel.getStarredCurrencies().observe(this, starObserver)
+        // category chips: hide categories without entries, preselect the first available one
+        val chips = mapOf(
+            AddCurrencyDialogAdapter.AddGroup.CURRENCIES to view.findViewById<Chip>(R.id.chipCurrencies),
+            AddCurrencyDialogAdapter.AddGroup.CRYPTO to view.findViewById<Chip>(R.id.chipCrypto),
+            AddCurrencyDialogAdapter.AddGroup.COMMODITIES to view.findViewById<Chip>(R.id.chipCommodities),
+            AddCurrencyDialogAdapter.AddGroup.METALS to view.findViewById<Chip>(R.id.chipMetals)
+        )
+        chips.forEach { (group, chip) ->
+            chip.visibility = if (group in adapter.getCategories()) View.VISIBLE else View.GONE
+        }
+        val initialGroup = adapter.getCategories().firstOrNull()
+            ?: AddCurrencyDialogAdapter.AddGroup.CURRENCIES
+        chips.getValue(initialGroup).isChecked = true
+        adapter.setCategory(initialGroup)
 
-        // live search: filter as the user types
+        // chip tap: show only the selected category (an open search stays open and keeps filtering)
+        chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            chips.entries.firstOrNull { it.value.id in checkedIds }
+                ?.let { adapter.setCategory(it.key) }
+        }
+
+        // search FAB: toggles the search field, which live-filters the current category
+        btnSearch.setOnClickListener {
+            val opening = searchView.visibility != View.VISIBLE
+            searchView.visibility = if (opening) View.VISIBLE else View.GONE
+            btnSearch.setImageResource(if (opening) R.drawable.ic_close else R.drawable.ic_search)
+            if (opening) {
+                searchView.requestFocus()
+            } else {
+                searchView.setQuery(null, false)
+                adapter.filter(null)
+                searchView.clearFocus()
+            }
+        }
+
+        // live search: filter the selected category as the user types
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextChange(query: String?): Boolean {
                 adapter.filter(query)
@@ -167,6 +203,10 @@ class RatesListActivity : BaseActivity() {
             }
         })
         searchView.clearFocus()
+
+        // keep the selected state in sync while the dialog is open
+        val starObserver = Observer<Set<Currency>> { adapter.setStars(it) }
+        viewModel.getStarredCurrencies().observe(this, starObserver)
 
         // build dialog
         val dialog = AlertDialog.Builder(this)

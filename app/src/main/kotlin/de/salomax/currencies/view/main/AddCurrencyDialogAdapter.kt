@@ -15,9 +15,10 @@ import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
 
 /**
- * Adapter of the add-currency dialog: shows all available rates grouped into sections
- * (currencies / precious metals / crypto / commodities), each with its own header,
- * and supports live-filtering by full name or ISO code while the user types.
+ * Adapter of the add-currency dialog: shows the entries of the currently selected category
+ * (currencies / crypto / commodities / precious metals) and supports live-filtering by full name
+ * or ISO code while the user types. The category is driven by the dialog's category chips
+ * (see [setCategory]/[getCategories]).
  */
 @SuppressLint("NotifyDataSetChanged")
 class AddCurrencyDialogAdapter(private val context: Context) :
@@ -26,44 +27,28 @@ class AddCurrencyDialogAdapter(private val context: Context) :
     // listeners
     var onItemToggled: ((Currency) -> Unit)? = null
 
-    // the section an entry belongs to (order = display order)
-    private enum class AddGroup {
-        CURRENCIES, METALS, CRYPTO, COMMODITIES
-    }
-
-    // the flat list of rows the dialog shows: section headers + pickable entries
-    private sealed class Row {
-        class Header(val title: String) : Row()
-        class Entry(val currency: Currency) : Row()
+    // picker categories (order = chip order in the dialog)
+    enum class AddGroup {
+        CURRENCIES, CRYPTO, COMMODITIES, METALS
     }
 
     private var groups: Map<AddGroup, List<Currency>> = emptyMap()
-    private var rows: List<Row> = emptyList()
+    private var rows: List<Currency> = emptyList()
     private var stars: Set<Currency> = emptySet()
     private var filterText: String? = null
+    private var selectedGroup: AddGroup = AddGroup.CURRENCIES
 
     private val drawableStar = ContextCompat.getDrawable(context, R.drawable.ic_favorite)
     private val drawableStarEmpty = ContextCompat.getDrawable(context, R.drawable.ic_favorite_empty)
 
-    override fun getItemViewType(position: Int): Int {
-        return if (rows[position] is Row.Header) 0 else 1
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        val inflater = LayoutInflater.from(context)
-        return when (viewType) {
-            // section header
-            0 -> ViewHolderHeader(inflater.inflate(R.layout.row_add_currency_header, parent, false))
-            // pickable entry
-            else -> ViewHolderEntry(inflater.inflate(R.layout.row_currency_dropdown, parent, false))
-        }
+        return ViewHolderEntry(
+            LayoutInflater.from(context).inflate(R.layout.row_currency_dropdown, parent, false)
+        )
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (val row = rows[position]) {
-            is Row.Header -> (holder as ViewHolderHeader).textView.text = row.title
-            is Row.Entry -> (holder as ViewHolderEntry).bind(row.currency)
-        }
+        (holder as ViewHolderEntry).bind(rows[position])
     }
 
     override fun getItemCount(): Int {
@@ -77,6 +62,10 @@ class AddCurrencyDialogAdapter(private val context: Context) :
             .distinct()
             .groupBy { groupOf(it) }
             .mapValues { (_, currencies) -> currencies.sortedBy { it.iso4217Alpha() } }
+        // the selected category may have no entries (e.g. provider without brent oil) → fall back
+        if (groups[selectedGroup].isNullOrEmpty()) {
+            selectedGroup = getCategories().firstOrNull() ?: AddGroup.CURRENCIES
+        }
         rebuild()
     }
 
@@ -90,6 +79,17 @@ class AddCurrencyDialogAdapter(private val context: Context) :
         rebuild()
     }
 
+    // the picker's category tabs: only categories that currently have entries, in chip order
+    fun getCategories(): List<AddGroup> {
+        return AddGroup.entries.filter { groups[it].orEmpty().isNotEmpty() }
+    }
+
+    // show only this category's entries (no section headers — the chip is the header)
+    fun setCategory(group: AddGroup) {
+        selectedGroup = group
+        rebuild()
+    }
+
     // live search: substring match against the localized full name AND the ISO code
     private fun matches(currency: Currency): Boolean {
         val query = filterText ?: return true
@@ -97,33 +97,14 @@ class AddCurrencyDialogAdapter(private val context: Context) :
             || currency.iso4217Alpha().contains(query, ignoreCase = true)
     }
 
-    // rebuild the visible rows: every group keeps its header, but only if it has matching entries
+    // rebuild the visible rows: the selected category's entries, filtered by the live search
     private fun rebuild() {
-        val newRows = mutableListOf<Row>()
-        for (group in AddGroup.entries) {
-            val entries = groups[group].orEmpty().filter { matches(it) }
-            if (entries.isNotEmpty()) {
-                newRows.add(Row.Header(groupTitle(group)))
-                entries.forEach { newRows.add(Row.Entry(it)) }
-            }
-        }
-        rows = newRows
+        rows = groups[selectedGroup].orEmpty().filter { matches(it) }
         notifyDataSetChanged()
     }
 
-    private fun groupTitle(group: AddGroup): String {
-        return context.getString(
-            when (group) {
-                AddGroup.CURRENCIES -> R.string.add_currency_section_currencies
-                AddGroup.METALS -> R.string.add_currency_section_metals
-                AddGroup.CRYPTO -> R.string.add_currency_section_crypto
-                AddGroup.COMMODITIES -> R.string.add_currency_section_commodities
-            }
-        )
-    }
-
     /**
-     * classify a [Currency] into its picker section: gold/silver → metals, bitcoin → crypto,
+     * classify a [Currency] into its picker category: gold/silver → metals, bitcoin → crypto,
      * brent oil → commodities, everything else → fiat currencies.
      * XPD/XPT are already filtered out (no data source), but would belong to METALS.
      */
@@ -134,11 +115,6 @@ class AddCurrencyDialogAdapter(private val context: Context) :
             Currency.XBZ -> AddGroup.COMMODITIES
             else -> AddGroup.CURRENCIES
         }
-    }
-
-    inner class ViewHolderHeader(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
-        val textView: TextView = itemView.findViewById(R.id.text_header)
     }
 
     inner class ViewHolderEntry(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -164,9 +140,7 @@ class AddCurrencyDialogAdapter(private val context: Context) :
         init {
             // tapping the row or the star toggles the currency (add/remove)
             val toggle = {
-                rows.getOrNull(layoutPosition)
-                    ?.let { it as? Row.Entry }
-                    ?.let { onItemToggled?.invoke(it.currency) }
+                rows.getOrNull(layoutPosition)?.let { onItemToggled?.invoke(it) }
             }
             itemView.setOnClickListener { toggle() }
             btnStar.setOnClickListener { toggle() }
