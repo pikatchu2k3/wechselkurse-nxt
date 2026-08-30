@@ -22,12 +22,6 @@
         app:showAsAction="never" />
 
     <item
-        android:orderInCategory="11"
-        android:id="@+id/converter"
-        android:title="@string/menu_converter"
-        app:showAsAction="never" />
-
-    <item
         android:orderInCategory="12"
         android:id="@+id/date_picker"
         android:title="@string/menu_historical_rates"

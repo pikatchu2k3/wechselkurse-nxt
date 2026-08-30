@@ -42,22 +42,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:trackColor="@android:color/transparent" />
 
-        <!-- toggle button & separator ************************************ -->
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btn_toggle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="40dp"
-            android:backgroundTint="?attr/colorPrimary"
-            android:contentDescription="@string/desc_toggle_currencies"
-            android:onClick="toggleEvent"
-            android:src="@drawable/ic_swap_vert"
-            app:layout_constraintBottom_toTopOf="@+id/guideline_display"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/guideline_display"
-            app:tint="?attr/colorOnPrimary" />
-
         <!-- fee ********************************************************** -->
 
         <TextView
@@ -118,16 +102,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             tools:text="Rates as of 1/21/22 by Frankfurter.app" />
 
-        <!-- top main_display ********************************************* -->
-
-        <de.salomax.currencies.view.main.spinner.SearchableSpinner
-            android:id="@+id/spinnerFrom"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="true"
-            app:layout_constraintBottom_toBottomOf="@+id/scrollViewTextFrom"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/scrollViewTextFrom" />
+        <!-- top main_display: the amount is entered in the tapped currency ************* -->
 
         <TextView
             android:id="@+id/textCalculations"
@@ -148,7 +123,7 @@
             android:scrollbars="none"
             app:layout_constraintBottom_toTopOf="@+id/guideline_display"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/spinnerFrom"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
@@ -161,18 +136,10 @@
                 android:longClickable="true"
                 android:padding="@dimen/margin2x"
                 android:textDirection="ltr"
-                tools:text="$ 13.99" />
+                tools:text="₺ 1.672,50" />
         </HorizontalScrollView>
 
-        <!-- bottom main_display ****************************************** -->
-
-        <de.salomax.currencies.view.main.spinner.SearchableSpinner
-            android:id="@+id/spinnerTo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="@+id/scrollViewTextTo"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/scrollViewTextTo" />
+        <!-- bottom main_display: the equivalent in the app's base currency (EUR) ********** -->
 
         <HorizontalScrollView
             android:id="@+id/scrollViewTextTo"
@@ -181,7 +148,7 @@
             android:scrollbars="none"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/spinnerTo"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/guideline_display">
 
             <TextView
@@ -194,7 +161,7 @@
                 android:longClickable="true"
                 android:padding="@dimen/margin2x"
                 android:textDirection="ltr"
-                tools:text="€ 383.99" />
+                tools:text="≈ € 150,00" />
         </HorizontalScrollView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

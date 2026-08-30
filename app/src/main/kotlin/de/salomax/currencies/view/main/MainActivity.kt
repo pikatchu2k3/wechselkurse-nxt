@@ -14,7 +14,6 @@ import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
 import android.widget.DatePicker
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -36,14 +35,12 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import de.salomax.currencies.R
 import de.salomax.currencies.model.Currency
-import de.salomax.currencies.model.Rate
 import de.salomax.currencies.repository.Database
 import de.salomax.currencies.util.getDecimalSeparator
 import de.salomax.currencies.util.getLocale
 import de.salomax.currencies.util.toHumanReadableNumber
 import de.salomax.currencies.util.toNumber
 import de.salomax.currencies.view.BaseActivity
-import de.salomax.currencies.view.main.spinner.SearchableSpinner
 import de.salomax.currencies.view.preference.PreferenceActivity
 import de.salomax.currencies.view.timeline.TimelineActivity
 import de.salomax.currencies.viewmodel.main.MainViewModel
@@ -66,8 +63,6 @@ class MainActivity : BaseActivity() {
     private lateinit var tvCalculations: TextView
     private lateinit var tvFrom: TextView
     private lateinit var tvTo: TextView
-    private lateinit var spinnerFrom: SearchableSpinner
-    private lateinit var spinnerTo: SearchableSpinner
     private lateinit var tvInfoConversion: TextView
     private lateinit var tvInfoDate: TextView
     private lateinit var tvFee: TextView
@@ -86,20 +81,20 @@ class MainActivity : BaseActivity() {
         this.preferenceModel = ViewModelProvider(this)[PreferenceViewModel::class.java]
 
         // "change amount" mode: the rates list tapped a currency to edit its amount
-        this.tappedCurrency = intent.getStringExtra(RatesListActivity.ARG_TAPPED_CURRENCY)
+        val tapped = intent.getStringExtra(RatesListActivity.ARG_TAPPED_CURRENCY)
             ?.let { Currency.fromString(it) }
-        if (this.tappedCurrency != null) {
-            title = getString(R.string.change_amount)
-            supportActionBar?.subtitle =
-                "${this.tappedCurrency!!.fullName(this)} (${this.tappedCurrency!!.iso4217Alpha()})"
-            // the home row is the editable base value: the amount is entered directly in the home currency
-            if (this.tappedCurrency == Database(this).getHomeCurrency())
-                viewModel.setBaseCurrency(this.tappedCurrency!!)
-            // convert from the app's base to the tapped currency
-            viewModel.setDestinationCurrency(this.tappedCurrency!!)
-        } else {
-            title = null
+        this.tappedCurrency = tapped
+        // the standalone converter was removed (phase 6): without a tapped currency there is nothing to edit
+        if (tapped == null) {
+            finish()
+            return
         }
+        title = getString(R.string.change_amount)
+        supportActionBar?.subtitle =
+            "${tapped.fullName(this)} (${tapped.iso4217Alpha()})"
+        // the calculator computes ONLY in the tapped currency:
+        // the keypad inputs the amount in that currency, the result line shows its EUR equivalent
+        viewModel.setConversionCurrencies(tapped, Currency.EUR)
         // up navigation back to the rates list
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
@@ -109,8 +104,6 @@ class MainActivity : BaseActivity() {
         this.tvCalculations = findViewById(R.id.textCalculations)
         this.tvFrom = findViewById(R.id.textFrom)
         this.tvTo = findViewById(R.id.textTo)
-        this.spinnerFrom = findViewById(R.id.spinnerFrom)
-        this.spinnerTo = findViewById(R.id.spinnerTo)
         this.tvInfoConversion = findViewById(R.id.textInfoConversion)
         this.tvInfoDate = findViewById(R.id.textInfoDate)
         this.tvFee = findViewById(R.id.textFee)
@@ -282,36 +275,6 @@ class MainActivity : BaseActivity() {
         // long click on input "to"
         registerForContextMenu(findViewById<LinearLayout>(R.id.textTo))
 
-        // spinners: listen for changes
-        spinnerFrom.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                if (position != -1 && parent?.adapter?.isEmpty != true) {
-                    val rate = parent?.adapter?.getItem(position) as Rate?
-                    rate?.let { viewModel.setBaseCurrency(it.currency) }
-                }
-            }
-        }
-        spinnerTo.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-            override fun onItemSelected(
-                parent: AdapterView<*>?,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                if (position != -1 && parent?.adapter?.isEmpty != true) {
-                    val rate = parent?.adapter?.getItem(position) as Rate?
-                    rate?.let { viewModel.setDestinationCurrency(it.currency) }
-                }
-            }
-        }
-
         // swipe to refresh
         swipeRefresh.setOnRefreshListener {
             // update
@@ -389,9 +352,6 @@ class MainActivity : BaseActivity() {
                     else
                         View.GONE
             }
-            // rates
-            spinnerFrom.setRates(it?.rates)
-            spinnerTo.setRates(it?.rates)
         }
 
         // something bad happened
@@ -420,31 +380,12 @@ class MainActivity : BaseActivity() {
         viewModel.getCurrentBaseValueFormatted().observe(this) {
             tvFrom.text = it
         }
+        // the result line shows the EUR equivalent of the entered amount
         viewModel.getResultFormatted().observe(this) {
-            tvTo.text = it
+            tvTo.text = it.insert(0, "≈ ")
         }
         viewModel.getCalculationInputFormatted().observe(this) {
             tvCalculations.text = it
-        }
-
-        // selected rates changed
-        viewModel.getBaseCurrency().observe(this) { currency ->
-            spinnerFrom.setSelection(currency)
-            // conversion preview
-            if (currency != null)
-                // get rate from currency
-                viewModel.getExchangeRates().value?.rates?.find { it.currency == currency }?.value
-                    // give it to the adapter
-                    ?.let { spinnerTo.setCurrentRate(Rate(currency, it)) }
-        }
-        viewModel.getDestinationCurrency().observe(this) { currency ->
-            spinnerTo.setSelection(currency)
-            // conversion preview
-            if (currency != null)
-                // get rate from currency
-                viewModel.getExchangeRates().value?.rates?.find { it.currency == currency }?.value
-                    // give it to the adapter
-                    ?.let { spinnerFrom.setCurrentRate(Rate(currency, it)) }
         }
 
         // fee changed
@@ -457,13 +398,6 @@ class MainActivity : BaseActivity() {
                 if (it >= 0) MaterialColors.getColor(this, R.attr.colorError, null)
                 else MaterialColors.getColor(this, R.attr.colorPrimary, null)
             )
-        }
-
-        viewModel.getCurrentBaseValueAsNumber().observe(this) {
-            spinnerTo.setCurrentSum(it)
-        }
-        viewModel.getResultAsNumber().observe(this) {
-            spinnerFrom.setCurrentSum(it)
         }
 
         viewModel.isExtendedKeypadEnabled.observe(this) { extendedEnabled ->
@@ -542,7 +476,7 @@ class MainActivity : BaseActivity() {
     }
 
     /*
-     * keyboard: confirm - persist the current result as the edited amount of the tapped currency
+     * keyboard: confirm - persist the entered amount (in the tapped currency)
      */
     fun confirmEvent(@Suppress("UNUSED_PARAMETER") view: View) {
         confirmEditedAmount()
@@ -550,7 +484,8 @@ class MainActivity : BaseActivity() {
 
     private fun confirmEditedAmount() {
         this.tappedCurrency?.let { currency ->
-            viewModel.getResultAsNumber().value?.let { amount ->
+            // the keypad inputs the amount in the tapped currency, so that's the value to persist
+            viewModel.getCurrentBaseValueAsNumber().value?.let { amount ->
                 val database = Database(this)
                 // confirming the home row sets the base value that scales ALL rows of the rates list
                 if (currency == database.getHomeCurrency())
@@ -602,16 +537,6 @@ class MainActivity : BaseActivity() {
                 }
         }
         return true
-    }
-
-    /*
-     * swap currencies
-     */
-    fun toggleEvent(@Suppress("UNUSED_PARAMETER") view: View) {
-        val from = spinnerFrom.selectedItemPosition
-        val to = spinnerTo.selectedItemPosition
-        spinnerFrom.setSelection(to)
-        spinnerTo.setSelection(from)
     }
 
     private fun prepareFoldableLayoutChanges() {

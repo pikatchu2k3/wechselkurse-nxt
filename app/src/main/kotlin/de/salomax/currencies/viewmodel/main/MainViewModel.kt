@@ -626,18 +626,13 @@ class MainViewModel(val app: Application, onlyCache: Boolean = false) : AndroidV
      * selected currencies *************************************************************************
      */
 
-    internal fun setBaseCurrency(currency: Currency) {
-        Database(getApplication()).saveLastUsedRates(
-            currency,
-            currentDestinationCurrency.value
-        )
-    }
-
-    internal fun setDestinationCurrency(currency: Currency) {
-        Database(getApplication()).saveLastUsedRates(
-            currentBaseCurrency.value,
-            currency
-        )
+    /**
+     * fix the currency pair of the "change amount" screen in one atomic write:
+     * the keypad inputs the amount in the tapped currency (base),
+     * the result line shows its equivalent in the app's base currency EUR (destination)
+     */
+    internal fun setConversionCurrencies(base: Currency, destination: Currency) {
+        Database(getApplication()).saveLastUsedRates(base, destination)
     }
 
     internal fun getBaseCurrency(): LiveData<Currency?> {

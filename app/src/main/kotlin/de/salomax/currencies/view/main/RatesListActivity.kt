@@ -113,10 +113,6 @@ class RatesListActivity : BaseActivity() {
                 startActivity(Intent(this, PreferenceActivity::class.java))
                 true
             }
-            R.id.converter -> {
-                startActivity(Intent(this, MainActivity::class.java))
-                true
-            }
             R.id.date_picker -> {
                 showHistoricalDateDialog()
                 true
