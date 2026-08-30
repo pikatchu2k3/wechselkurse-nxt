@@ -7,7 +7,10 @@ import com.github.kittinunf.fuel.core.FuelError
 import de.salomax.currencies.R
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.ExchangeRates
+import de.salomax.currencies.model.Rate
 import de.salomax.currencies.model.Timeline
+import de.salomax.currencies.model.provider.BrentOil
+import de.salomax.currencies.model.provider.CoinGecko
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -49,6 +52,23 @@ class ExchangeRatesRepository(private val context: Context) {
                         Database(context).insertExchangeRates(rates)
                         // reset error
                         liveError.postValue(null)
+
+                        // enrich the fiat-only snapshot with the supplementary merge-sources
+                        // (crypto + Brent). a merge failure is deliberately swallowed:
+                        // the fiat rates above stay cached and usable, and merge problems
+                        // must never trip the generic error path
+                        try {
+                            val mergeRates = fetchMergeRates(rates)
+                            if (mergeRates.isNotEmpty()) {
+                                val mergedRates = rates.rates.orEmpty()
+                                    .filterNot { existing ->
+                                        mergeRates.any { it.currency == existing.currency }
+                                    }
+                                    .plus(mergeRates)
+                                Database(context).insertExchangeRates(rates.copy(rates = mergedRates))
+                            }
+                        } catch (ignored: Exception) {
+                        }
                     }
                     // ERROR: got response from API, but just an error message
                     else {
@@ -104,6 +124,45 @@ class ExchangeRatesRepository(private val context: Context) {
         }
 
         return liveTimeline
+    }
+
+    /**
+     * Fetches the supplementary merge-sources (crypto + Brent) and converts them into
+     * [Rate]s following the app's internal "1 EUR = X units" convention:
+     * CoinGecko returns "EUR per 1 coin" and Yahoo/EIA return "USD per barrel", so both
+     * are inverted (Brent additionally converted to EUR via the freshly fetched fiat USD
+     * rate) before merging. Never throws for a failed source - failures are ignored and
+     * simply yield no Rate.
+     */
+    private suspend fun fetchMergeRates(rates: ExchangeRates): List<Rate> {
+        val merged = mutableListOf<Rate>()
+
+        // the merge-sources are EUR-denominated - they can't be merged into a non-EUR snapshot
+        if (rates.base == null || rates.base == Currency.EUR) {
+            // crypto: EUR per 1 coin -> invert to "1 EUR = X coins"
+            try {
+                CoinGecko.getPrices(CoinGecko.cryptoIds(), Currency.EUR, context)
+                    .component1()
+                    ?.forEach { (currency, eurPerUnit) ->
+                        if (eurPerUnit > 0f) merged.add(Rate(currency, 1f / eurPerUnit))
+                    }
+            } catch (ignored: Exception) {
+            }
+            // Brent: USD per barrel -> EUR per barrel via fiat USD rate -> invert to "1 EUR = X barrels"
+            try {
+                BrentOil.getUsdPerBarrel(context)
+                    .component1()
+                    ?.let { usdPerBarrel ->
+                        // fiat Rate(USD).value is "USD per 1 EUR"
+                        val usdPerEur = rates.rates?.find { it.currency == Currency.USD }?.value
+                        if (usdPerEur != null && usdPerEur > 0f && usdPerBarrel > 0f)
+                            merged.add(Rate(Currency.XBZ, usdPerEur / usdPerBarrel))
+                    }
+            } catch (ignored: Exception) {
+            }
+        }
+
+        return merged
     }
 
     private fun handleGenericError(fuelError: FuelError?) {

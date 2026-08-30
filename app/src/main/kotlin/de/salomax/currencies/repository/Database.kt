@@ -165,6 +165,7 @@ class Database(context: Context) {
 
     private val keyApi = "_api"
     private val keyOpenExchangeratesApiKey = "_api_openExchangeratesApiKey"
+    private val keyBrentApiKey = "_api_brentApiKey"
     private val keyTheme = "_theme"
     private val keyPureBlackEnabled = "_pureBlackEnabled"
     private val keyFeeEnabled = "_feeEnabled"
@@ -202,6 +203,16 @@ class Database(context: Context) {
 
     fun getOpenExchangeRatesApiKeyAsync(): LiveData<String?> {
         return SharedPreferenceStringLiveData(prefs, keyOpenExchangeratesApiKey, null)
+    }
+
+    fun setBrentApiKey(id: String?) {
+        prefs.apply {
+            edit().putString(keyBrentApiKey, id).apply()
+        }
+    }
+
+    fun getBrentApiKey(): String? {
+        return prefs.getString(keyBrentApiKey, null)
     }
 
     /* theme */
