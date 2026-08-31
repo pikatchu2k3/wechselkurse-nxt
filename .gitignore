@@ -25,3 +25,7 @@ local.properties
 ._*
 .DS_Store
 Thumbs.db
+
+# build artifacts / app backups
+*.apk
+*.aab
