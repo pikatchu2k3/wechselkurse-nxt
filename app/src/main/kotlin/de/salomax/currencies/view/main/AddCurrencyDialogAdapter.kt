@@ -13,6 +13,7 @@ import com.google.android.material.imageview.ShapeableImageView
 import de.salomax.currencies.R
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
+import de.salomax.currencies.util.getSignificantDecimalPlaces
 import de.salomax.currencies.util.hasAppendedCurrencySymbol
 import de.salomax.currencies.util.toHumanReadableNumber
 
@@ -142,9 +143,13 @@ class AddCurrencyDialogAdapter(private val context: Context) :
             tvName.text = currency.fullName(context)
             val sourceSymbol = Currency.EUR.symbol() ?: ""
             val destinationSymbol = currency.symbol() ?: ""
-            val destination = (1.0 / baseEurValue * (values[currency] ?: 0f))
-                .toString()
-                .toHumanReadableNumber(context, decimalPlaces = 2, trim = true)
+            val rawDestination = (1.0 / baseEurValue * (values[currency] ?: 0f)).toFloat()
+            val destination = rawDestination.toString()
+                .toHumanReadableNumber(
+                    context,
+                    decimalPlaces = rawDestination.getSignificantDecimalPlaces(2),
+                    trim = true
+                )
             val left =
                 if (sourceSymbol.isEmpty()) "1"
                 else if (hasAppendedCurrencySymbol(context)) "1 $sourceSymbol" else "$sourceSymbol 1"

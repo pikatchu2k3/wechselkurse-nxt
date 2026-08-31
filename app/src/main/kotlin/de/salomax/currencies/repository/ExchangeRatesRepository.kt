@@ -138,13 +138,20 @@ class ExchangeRatesRepository(private val context: Context) {
     private suspend fun fetchMergeRates(rates: ExchangeRates): List<Rate> {
         val merged = mutableListOf<Rate>()
 
+        // The fiat snapshot rows sit on the provider's own base scale (e.g. BankRossii: EUR=0.0099),
+        // but the supplementary sources (Coinbase/CoinGecko) are EUR-denominated ("1 EUR = X units").
+        // To display them consistently via the same formula (baseValue/baseRateValue * rate.value),
+        // scale each merge value by the snapshot's EUR value.
+        val eurScale = rates.rates?.find { it.currency == Currency.EUR }?.value
+            ?.takeIf { it != 0f } ?: 1f
+
         // crypto + gold: primary source is Coinbase (reliable, no API key) — it returns
         // "EUR per 1 unit" (coin / troy oz), inverted to the app's "1 EUR = X units" convention.
         // Supplementary sources are merged for EVERY provider (the provider's own base does not gate them).
         try {
             listOf(Currency.BTC to "BTC", Currency.XAU to "PAXG").forEach { (currency, symbol) ->
                 Coinbase.getEurSpot(symbol).component1()?.let { eurPerUnit ->
-                    if (eurPerUnit > 0f) merged.add(Rate(currency, 1f / eurPerUnit))
+                    if (eurPerUnit > 0f) merged.add(Rate(currency, (1f / eurPerUnit) * eurScale))
                 }
             }
         } catch (ignored: Exception) {
@@ -158,7 +165,7 @@ class ExchangeRatesRepository(private val context: Context) {
             ).component1()
                 ?.forEach { (currency, eurPerUnit) ->
                     if (currency !in merged.map { it.currency } && eurPerUnit > 0f)
-                        merged.add(Rate(currency, 1f / eurPerUnit))
+                        merged.add(Rate(currency, (1f / eurPerUnit) * eurScale))
                 }
         } catch (ignored: Exception) {
         }
