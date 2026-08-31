@@ -13,6 +13,8 @@ import com.google.android.material.imageview.ShapeableImageView
 import de.salomax.currencies.R
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
+import de.salomax.currencies.util.hasAppendedCurrencySymbol
+import de.salomax.currencies.util.toHumanReadableNumber
 
 /**
  * Adapter of the add-currency dialog: shows the entries of the currently selected category
@@ -38,6 +40,9 @@ class AddCurrencyDialogAdapter(private val context: Context) :
     private var filterText: String? = null
     private var selectedGroup: AddGroup = AddGroup.CURRENCIES
 
+    private var values: Map<Currency, Float> = emptyMap()
+    private var baseEurValue: Float = 1f
+
     private val drawableStar = ContextCompat.getDrawable(context, R.drawable.ic_favorite)
     private val drawableStarEmpty = ContextCompat.getDrawable(context, R.drawable.ic_favorite_empty)
 
@@ -47,6 +52,7 @@ class AddCurrencyDialogAdapter(private val context: Context) :
         )
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         (holder as ViewHolderEntry).bind(rows[position])
     }
@@ -56,6 +62,8 @@ class AddCurrencyDialogAdapter(private val context: Context) :
     }
 
     fun setRates(rates: List<Rate>?) {
+        values = rates?.associate { it.currency to it.value } ?: emptyMap()
+        baseEurValue = values[Currency.EUR]?.takeIf { it != 0f } ?: 1f
         groups = (rates?.map { it.currency } ?: emptyList())
             // XPD/XPT have no data source: keep them hidden
             .filter { it != Currency.XPD && it != Currency.XPT }
@@ -122,6 +130,7 @@ class AddCurrencyDialogAdapter(private val context: Context) :
         val ivFlag: ShapeableImageView = itemView.findViewById(R.id.image)
         val tvCode: TextView = itemView.findViewById(R.id.text2)
         val tvName: TextView = itemView.findViewById(R.id.text)
+        val tvRate: TextView = itemView.findViewById(R.id.text3)
         val btnStar: ImageButton = itemView.findViewById(R.id.btn_fav)
 
         fun bind(currency: Currency) {
@@ -131,6 +140,18 @@ class AddCurrencyDialogAdapter(private val context: Context) :
             tvCode.text = currency.iso4217Alpha()
             // full name ("Gold Ounce")
             tvName.text = currency.fullName(context)
+            val sourceSymbol = Currency.EUR.symbol() ?: ""
+            val destinationSymbol = currency.symbol() ?: ""
+            val destination = (1.0 / baseEurValue * (values[currency] ?: 0f))
+                .toString()
+                .toHumanReadableNumber(context, decimalPlaces = 2, trim = true)
+            val left =
+                if (sourceSymbol.isEmpty()) "1"
+                else if (hasAppendedCurrencySymbol(context)) "1 $sourceSymbol" else "$sourceSymbol 1"
+            val right =
+                if (destinationSymbol.isEmpty()) destination
+                else if (hasAppendedCurrencySymbol(context)) "$destination $destinationSymbol" else "$destinationSymbol $destination"
+            tvRate.text = "$left = $right".replace("\u200F", "").trim()
             // selected state: starred = added to the rates list
             btnStar.setImageDrawable(
                 if (currency in stars) drawableStar else drawableStarEmpty

@@ -1,5 +1,33 @@
 # Phase 5d — Handoff / Ist-Zustand (2026-08-31)
 
+## Phase 5d FIX — bestätigte Ursachen (2026-08-31, nach Diagnose-Run)
+
+### A) „Keine Chips / Suche tut nichts" — URSACHE BESTÄTIGT: Dialog-Höhe (GEFIXT)
+- Die Suche nach einem Alt-Pfad (SearchableSpinner) hat **nichts** ergeben: `SearchableSpinner`
+  wird von keinem Layout und keiner Activity referenziert; `action_add` routet direkt zu
+  `showAddCurrencyDialog()` (RatesListActivity.kt:107). Der richtige Dialog wird also geöffnet.
+- Reale Ursache: `AlertDialog.Builder(this).setView(view)` (RatesListActivity.kt:212) setzt keine
+  Dialog-Höhe. Das Root-`LinearLayout` von `dialog_add_currency.xml` ist `match_parent`, das innere
+  `FrameLayout` (RecyclerView + SearchView + FAB) nutzt `height=0dp` + `weight=1` → in einem plain
+  `AlertDialog` kollabiert der gewichtete Listenbereich auf ~0 Höhe; Chips/Suche/Liste sind damit
+  nicht (sinnvoll) sichtbar.
+- **Fix:** Nach `dialog.show()` wird das Dialog-Fenster explizit dimensioniert
+  (`dialog.window?.setLayout(0.9 × Breite, 0.6 × Höhe)`, RatesListActivity.kt). Damit bleibt der
+  `weight=1`-Bereich erhalten: Chips sichtbar, Such-FAB toggelt das `SearchView` (Live-Filter der
+  gewählten Kategorie), Liste rendert.
+- Zusätzlich (klein): `AddCurrencyDialogAdapter` bindet jetzt `R.id.text3`
+  („€ 1 = $ 9.19"-Vorschau, abgeleitet aus dem EUR-basierten Snapshot, reine Darstellung —
+  keine Konvertierungslogik angefasst).
+
+### B) „Alle Werte = 1" — KEIN Code-Bug: Stale-Daten auf dem Gerät (Phase-6b-Fix korrekt)
+- Der Phase-6b-Codefix ist korrekt (`base = Currency.EUR` gepinnt, `baseRateValue` aus dem vollen
+  ungefilterten Snapshot — RatesListViewModel.kt:63-65). Die Konvertierungslogik wurde NICHT geändert.
+- „Alle Zeilen = 1" ist ein **Datenzustand auf dem Gerät**: persistierte `edited_<ISO>`-Beträge /
+  alter Cache in den SharedPreferences. **Erforderlich: FRISCHE INSTALLATION** (App-Daten löschen
+  bzw. Deinstallieren + Neuinstallieren), um die stale `edited_*`-Werte zu räumen.
+  Nur wenn es auch nach frischer Installation flächendeckend 1 bleibt, ist es ein echter Bug —
+  dann `RatesListViewModel.getRows()` (Fallback `1f`) erneut prüfen.
+
 ## Was v1.4 enthalten sollte (kompiliert, Build grün)
 Build: `app/build/outputs/apk/fdroid/debug/de.salomax.currencies-v12300-fdroid-debug.apk`
 APK geliefert: `/tmp/wechselkurse-test-v1.4-tabs.apk` (12.790.454 Byte, MD5 `a570afc21eb8d5d4065c0a7794cab665`, AppId `de.salomax.currencies.debug`)
@@ -39,6 +67,8 @@ aber das Laufzeitverhalten auf dem Gerät weicht ab. Die Ursachen liegen also (s
 fehlenden Ressourcen oder Syntax, sondern in Layout-/Runtime- oder Datenzustand-Details.
 
 ## Hypothesen zur Ursache (für opencode zu verifizieren — NICHT blind fixen)
+> **[ERLEDIGT — siehe „Phase 5d FIX — bestätigte Ursachen" oben. A: Dialog-Höhe, gefixt.
+> B: Stale-Daten, frische Installation nötig.]**
 
 ### A) „Registerkarten keine da" + „Suche nicht" (Dialog-Layout)
 Der Dialog wird mit `AlertDialog.Builder(this).setView(view)` aufgebaut (Zeile 212-216), **ohne** die
@@ -61,6 +91,10 @@ die App nicht frisch installiert — vor einem Fix unbedingt testen mit frischer
 Nur wenn es selbst nach frischer Installation überall 1 bleibt, ist es ein echter Logik-Bug.**
 
 ## Nächste Schritte (morgen, mit opencode)
+> **[Stand nach Phase-5d-FIX: Punkt 3 ist erledigt (Dialog-Höhe gefixt). Punkt 1/2 entfallen —
+> Ursache A ist bestätigt, Ursache B ist Geräte-Datenzustand. Verbleibend: v1.5 bauen/liefern,
+> auf dem Gerät FRISCH INSTALLIEREN (Daten löschen) und testen; nur wenn dann noch überall 1
+> steht → Punkt 4 (getRows()-Fallback prüfen).]**
 1. **Erst verifizieren, nicht fixen:** Per ADB (OnePlus) bzw. Logcat feststellen, welcher Dialog beim „+"-Tap
    wirklich geöffnet wird, und was `getRows()`/`getExchangeRates()` tatsächlich liefert. → Eindeutig klären,
    warum Chips fehlen + alle = 1.

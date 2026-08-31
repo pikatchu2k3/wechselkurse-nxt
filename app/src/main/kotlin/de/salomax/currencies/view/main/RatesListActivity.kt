@@ -219,6 +219,10 @@ class RatesListActivity : BaseActivity() {
             viewModel.getStarredCurrencies().removeObserver(starObserver)
         }
         dialog.show()
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9f).toInt(),
+            (resources.displayMetrics.heightPixels * 0.6f).toInt()
+        )
     }
 
     private fun showHistoricalDateDialog() {
