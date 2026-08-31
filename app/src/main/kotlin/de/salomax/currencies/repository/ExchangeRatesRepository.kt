@@ -10,6 +10,7 @@ import de.salomax.currencies.model.ExchangeRates
 import de.salomax.currencies.model.Rate
 import de.salomax.currencies.model.Timeline
 import de.salomax.currencies.model.provider.BrentOil
+import de.salomax.currencies.model.provider.Coinbase
 import de.salomax.currencies.model.provider.CoinGecko
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -137,9 +138,18 @@ class ExchangeRatesRepository(private val context: Context) {
     private suspend fun fetchMergeRates(rates: ExchangeRates): List<Rate> {
         val merged = mutableListOf<Rate>()
 
-        // crypto + precious metals: CoinGecko returns "EUR per 1 unit" (coin / troy oz) ->
-        // invert to the app's "1 EUR = X units" convention. Supplementary sources are merged
-        // for EVERY provider (the provider's own base does not gate them).
+        // crypto + gold: primary source is Coinbase (reliable, no API key) — it returns
+        // "EUR per 1 unit" (coin / troy oz), inverted to the app's "1 EUR = X units" convention.
+        // Supplementary sources are merged for EVERY provider (the provider's own base does not gate them).
+        try {
+            listOf(Currency.BTC to "BTC", Currency.XAU to "PAXG").forEach { (currency, symbol) ->
+                Coinbase.getEurSpot(symbol).component1()?.let { eurPerUnit ->
+                    if (eurPerUnit > 0f) merged.add(Rate(currency, 1f / eurPerUnit))
+                }
+            }
+        } catch (ignored: Exception) {
+        }
+        // fallback: CoinGecko (same "EUR per 1 unit" convention) for any currency Coinbase did not fill
         try {
             CoinGecko.getPrices(
                 CoinGecko.cryptoIds() + CoinGecko.metalIds(),
@@ -147,7 +157,8 @@ class ExchangeRatesRepository(private val context: Context) {
                 context
             ).component1()
                 ?.forEach { (currency, eurPerUnit) ->
-                    if (eurPerUnit > 0f) merged.add(Rate(currency, 1f / eurPerUnit))
+                    if (currency !in merged.map { it.currency } && eurPerUnit > 0f)
+                        merged.add(Rate(currency, 1f / eurPerUnit))
                 }
         } catch (ignored: Exception) {
         }
