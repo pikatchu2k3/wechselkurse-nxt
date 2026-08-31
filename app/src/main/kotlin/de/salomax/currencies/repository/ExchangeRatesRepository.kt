@@ -137,29 +137,31 @@ class ExchangeRatesRepository(private val context: Context) {
     private suspend fun fetchMergeRates(rates: ExchangeRates): List<Rate> {
         val merged = mutableListOf<Rate>()
 
-        // the merge-sources are EUR-denominated - they can't be merged into a non-EUR snapshot
-        if (rates.base == null || rates.base == Currency.EUR) {
-            // crypto: EUR per 1 coin -> invert to "1 EUR = X coins"
-            try {
-                CoinGecko.getPrices(CoinGecko.cryptoIds(), Currency.EUR, context)
-                    .component1()
-                    ?.forEach { (currency, eurPerUnit) ->
-                        if (eurPerUnit > 0f) merged.add(Rate(currency, 1f / eurPerUnit))
-                    }
-            } catch (ignored: Exception) {
-            }
-            // Brent: USD per barrel -> EUR per barrel via fiat USD rate -> invert to "1 EUR = X barrels"
-            try {
-                BrentOil.getUsdPerBarrel(context)
-                    .component1()
-                    ?.let { usdPerBarrel ->
-                        // fiat Rate(USD).value is "USD per 1 EUR"
-                        val usdPerEur = rates.rates?.find { it.currency == Currency.USD }?.value
-                        if (usdPerEur != null && usdPerEur > 0f && usdPerBarrel > 0f)
-                            merged.add(Rate(Currency.XBZ, usdPerEur / usdPerBarrel))
-                    }
-            } catch (ignored: Exception) {
-            }
+        // crypto + precious metals: CoinGecko returns "EUR per 1 unit" (coin / troy oz) ->
+        // invert to the app's "1 EUR = X units" convention. Supplementary sources are merged
+        // for EVERY provider (the provider's own base does not gate them).
+        try {
+            CoinGecko.getPrices(
+                CoinGecko.cryptoIds() + CoinGecko.metalIds(),
+                Currency.EUR,
+                context
+            ).component1()
+                ?.forEach { (currency, eurPerUnit) ->
+                    if (eurPerUnit > 0f) merged.add(Rate(currency, 1f / eurPerUnit))
+                }
+        } catch (ignored: Exception) {
+        }
+        // Brent: USD per barrel -> EUR per barrel via fiat USD rate -> invert to "1 EUR = X barrels"
+        try {
+            BrentOil.getUsdPerBarrel(context)
+                .component1()
+                ?.let { usdPerBarrel ->
+                    // fiat Rate(USD).value is "USD per 1 EUR"
+                    val usdPerEur = rates.rates?.find { it.currency == Currency.USD }?.value
+                    if (usdPerEur != null && usdPerEur > 0f && usdPerBarrel > 0f)
+                        merged.add(Rate(Currency.XBZ, usdPerEur / usdPerBarrel))
+                }
+        } catch (ignored: Exception) {
         }
 
         return merged

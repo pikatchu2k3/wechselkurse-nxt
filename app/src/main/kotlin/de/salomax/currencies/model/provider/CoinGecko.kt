@@ -21,8 +21,18 @@ object CoinGecko {
         "bitcoin" to Currency.BTC
     )
 
+    // precious metals: CoinGecko token-backed ids -> Currency (1 token == 1 troy oz)
+    // Gold (XAU) via Pax Gold. Silver (XAG) has no reliable no-key CoinGecko id -> left out.
+    private val METAL_IDS: Map<String, Currency> = mapOf(
+        "pax-gold" to Currency.XAU
+    )
+
     fun cryptoIds(): List<String> {
         return CRYPTO_IDS.keys.toList()
+    }
+
+    fun metalIds(): List<String> {
+        return METAL_IDS.keys.toList()
     }
 
     /**
@@ -45,7 +55,12 @@ object CoinGecko {
                 Moshi.Builder()
                     .addLast(KotlinJsonAdapterFactory())
                     .apply {
-                        add(CoinGeckoPricesAdapter(CRYPTO_IDS.filterKeys { ids.contains(it) }, vs))
+                        add(
+                            CoinGeckoPricesAdapter(
+                                (CRYPTO_IDS + METAL_IDS).filterKeys { ids.contains(it) },
+                                vs
+                            )
+                        )
                     }
                     .build()
                     .adapter<Map<Currency, Float>>(

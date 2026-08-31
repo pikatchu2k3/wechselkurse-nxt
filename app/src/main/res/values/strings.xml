@@ -37,7 +37,7 @@
     <string name="add_currency">Add currency</string>
     <string name="add_currency_search_hint">Search</string>
     <string name="add_currency_section_currencies">Currencies</string>
-    <string name="add_currency_section_metals">Precious metals</string>
+    <string name="add_currency_section_metals">Metals</string>
     <string name="add_currency_section_crypto">Crypto</string>
     <string name="add_currency_section_commodities">Commodities</string>
     <string name="row_conversion">%1$s %2$s = %3$s %4$s</string>
