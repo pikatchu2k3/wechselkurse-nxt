@@ -162,9 +162,11 @@ class RatesListActivity : BaseActivity() {
             AddCurrencyDialogAdapter.AddGroup.COMMODITIES to view.findViewById<Chip>(R.id.chipCommodities),
             AddCurrencyDialogAdapter.AddGroup.METALS to view.findViewById<Chip>(R.id.chipMetals)
         )
-        chips.forEach { (group, chip) ->
-            chip.visibility = if (group in adapter.getCategories()) View.VISIBLE else View.GONE
-        }
+        // category tabs: ALWAYS visible, so the user sees the full tab structure
+        // (Währungen/Krypto/Rohstoffe/Edelmetalle) even when a category momentarily has
+        // no entries (e.g. a supplementary source failed to load). An empty category
+        // simply shows no entries instead of hiding the tab.
+        chips.values.forEach { it.visibility = View.VISIBLE }
         val initialGroup = adapter.getCategories().firstOrNull()
             ?: AddCurrencyDialogAdapter.AddGroup.CURRENCIES
         chips.getValue(initialGroup).isChecked = true
