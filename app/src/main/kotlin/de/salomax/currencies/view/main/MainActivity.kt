@@ -487,12 +487,11 @@ class MainActivity : BaseActivity() {
             // the keypad inputs the amount in the tapped currency, so that's the value to persist
             viewModel.getCurrentBaseValueAsNumber().value?.let { amount ->
                 val database = Database(this)
-                // confirming the home row sets the base value that scales ALL rows of the rates list
-                if (currency == database.getHomeCurrency())
-                    database.setBaseValue(amount)
-                // any other row: persist the per-currency edited amount
-                else
-                    database.setEditedAmount(currency, amount)
+                // the tapped currency becomes the reference basis: the whole rates list then
+                // scales relative to it (instead of pinning a fixed per-currency edited amount
+                // that loses the link to the last calculated currency)
+                database.setBaseValue(amount)
+                database.setHomeCurrency(currency)
             }
         }
         finish()

@@ -10,7 +10,6 @@ import com.google.android.material.imageview.ShapeableImageView
 import de.salomax.currencies.R
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
-import de.salomax.currencies.repository.Database
 import de.salomax.currencies.util.getSignificantDecimalPlaces
 import de.salomax.currencies.util.toHumanReadableNumber
 
@@ -74,13 +73,13 @@ class RatesListAdapter(private val onRowClick: (Currency) -> Unit) :
         holder.imageHome.visibility = if (row.isHome) View.VISIBLE else View.GONE
 
         val amountPrefix = currency.symbol() ?: currency.unitLabel() ?: currency.iso4217Alpha()
-        // the home row always shows the current base value; other rows show the edited amount
-        // (set via the "change amount" screen), if present, else the base-value-derived amount
+        // the home row always shows the current base value; every other row is derived from the
+        // base-value/basis-rate ratio, so the whole list stays linked to the last calculated
+        // currency (no per-currency pinned amounts that get out of sync)
         val amount = if (row.isHome)
             baseValue.toFloat()
         else
-            Database(context).getEditedAmount(currency)?.toFloat()
-                ?: (baseValue / baseRateValue * row.rate.value).toFloat()
+            (baseValue / baseRateValue * row.rate.value).toFloat()
 
         holder.textSubtitle.text =
             if (row.isHome)

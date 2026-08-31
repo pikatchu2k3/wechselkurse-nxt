@@ -45,23 +45,25 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
     private val rows = object : MediatorLiveData<Rows>() {
         var exchangeRates: ExchangeRates? = null
         var starred: Set<Currency>? = null
+        var homeCurrency: Currency = Currency.EUR
+        private val database = Database(app)
 
         init {
             addSource(mainViewModel.getExchangeRates()) { exchangeRates = it; update() }
             addSource(mainViewModel.getStarredCurrencies()) { starred = it; update() }
+            // the list is drawn relative to the currency last calculated in the change-amount screen
+            addSource(database.getHomeCurrencyLiveData()) { homeCurrency = it ?: Currency.EUR; update() }
         }
 
         fun update() {
             val allRates = exchangeRates?.rates ?: return
             val starredCurrencies = starred
+            val baseCurrency = homeCurrency
             value = Rows(
-                // the home row is always the rate-source base EUR: every stored rate value
-                // follows the "1 EUR = X units" convention (Phase 5b/6), so the persisted
-                // "_base" string must never decide the home row - a stale snapshot can
-                // still carry a foreign base (e.g. USD), which would misplace the home
-                // row and collapse all amounts
-                base = Currency.EUR,
-                baseRateValue = allRates.find { it.currency == Currency.EUR }
+                // the home row is always the currency the user last calculated a value for
+                // (persisted via setHomeCurrency) - the whole list scales relative to it
+                base = baseCurrency,
+                baseRateValue = allRates.find { it.currency == baseCurrency }
                     ?.value?.takeIf { it != 0f } ?: 1f,
                 // nothing starred (yet): show only the default set, never all rates
                 rates = if (starredCurrencies.isNullOrEmpty())

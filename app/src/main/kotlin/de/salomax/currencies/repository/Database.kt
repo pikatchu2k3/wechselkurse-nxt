@@ -58,13 +58,32 @@ class Database(context: Context) {
     }
 
     /**
-     * the home currency of the rates list.
-     * Always EUR: the rate-source base every stored rate value relates to
-     * ("1 EUR = X units") - regardless of what the (possibly stale) cached
-     * snapshot's "_base" string says
+     * the reference/home currency the rates list is drawn relative to.
+     * This is the currency the user last calculated a value for in the "change amount"
+     * screen (see [setHomeCurrency]) - so the whole list always scales relative to the
+     * last calculated currency. Defaults to EUR.
      */
     fun getHomeCurrency(): Currency? {
-        return Currency.EUR
+        return prefsLastState.getString(keyHomeCurrency, null)
+            ?.let { code -> Currency.fromString(code) }
+            ?: Currency.EUR
+    }
+
+    /**
+     * set the currency the rates list is drawn relative to (the one last calculated in the
+     * "change amount" screen). All row amounts are then shown relative to this currency.
+     */
+    fun setHomeCurrency(currency: Currency) {
+        prefsLastState.edit().putString(keyHomeCurrency, currency.iso4217Alpha()).apply()
+    }
+
+    /**
+     * observe the reference/home currency (see [getHomeCurrency]). Emits whenever it changes,
+     * so the rates list can re-derive all row amounts relative to the new basis.
+     */
+    fun getHomeCurrencyLiveData(): LiveData<Currency?> {
+        return SharedPreferenceStringLiveData(prefsLastState, keyHomeCurrency, "EUR")
+            .map { currencyCode -> Currency.fromString(currencyCode ?: "EUR") ?: Currency.EUR }
     }
 
     /*
@@ -76,6 +95,7 @@ class Database(context: Context) {
     private val keyLastStateTo = "_last_to"
     private val keyIsUpdating = "_isUpdating"
     private val keyHistoricalDate = "_historical_date"
+    private val keyHomeCurrency = "_home_currency"
 
     fun saveLastUsedRates(from: Currency?, to: Currency?) {
         prefsLastState.apply {
