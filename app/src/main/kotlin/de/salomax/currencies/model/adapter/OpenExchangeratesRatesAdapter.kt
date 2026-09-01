@@ -83,7 +83,7 @@ internal class OpenExchangeratesRatesAdapter {
                 base = base,
                 date = date,
                 rates = rates,
-                provider = ApiProvider.INFOR_EURO
+                provider = ApiProvider.OPEN_EXCHANGERATES
             )
         // error message
         else {
@@ -93,7 +93,7 @@ internal class OpenExchangeratesRatesAdapter {
                 base = base,
                 date = date,
                 rates = null,
-                provider = ApiProvider.INFOR_EURO
+                provider = ApiProvider.OPEN_EXCHANGERATES
             )
         }
     }

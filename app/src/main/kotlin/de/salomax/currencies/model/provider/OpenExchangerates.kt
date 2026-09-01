@@ -3,7 +3,7 @@ package de.salomax.currencies.model.provider
 import android.content.Context
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
-import com.github.kittinunf.fuel.core.awaitResult
+import com.github.kittinunf.fuel.core.awaitResponseResult
 import com.github.kittinunf.fuel.moshi.moshiDeserializerOf
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.map
@@ -48,34 +48,38 @@ class OpenExchangerates : ApiProvider.Api() {
             else
                 "/latest.json"
 
-        val result = Fuel.get(
+        return Fuel.get(
             baseUrl +
                     endpoint +
                     "?app_id=$apiKey" +
                     "&prettyprint=false" +
                     "&show_alternative=false"
-        ).awaitResult(
+        ).awaitResponseResult(
             moshiDeserializerOf(
                 Moshi.Builder()
-                    .addLast(KotlinJsonAdapterFactory())
+                    .add(KotlinJsonAdapterFactory())
                     .apply {
                         add(OpenExchangeratesRatesAdapter())
                     }
                     .build()
                     .adapter(ExchangeRates::class.java)
             )
-        ).map { rates ->
-            rates.copy(provider = ApiProvider.OPEN_EXCHANGERATES)
-        }
-
-        if (result.component2()?.response?.statusCode == 401) {
-            return Result.error(
-                FuelError.wrap(
-                    Exception(context.getString(R.string.error_invalid_api_key))
+        ).let { (_, response, result) ->
+            // check the HTTP status BEFORE relying on the deserialized result,
+            // so a 401 (invalid API key) is reported clearly even if the body
+            // is not valid JSON and Moshi fails to parse it.
+            if (response.statusCode == 401) {
+                Result.error(
+                    FuelError.wrap(
+                        Exception(context.getString(R.string.error_invalid_api_key))
+                    )
                 )
-            )
+            } else {
+                result.map { rates ->
+                    rates.copy(provider = ApiProvider.OPEN_EXCHANGERATES)
+                }
+            }
         }
-        return result
     }
 
     override suspend fun getTimeline(

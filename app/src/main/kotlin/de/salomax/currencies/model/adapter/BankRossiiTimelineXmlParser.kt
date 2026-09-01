@@ -62,8 +62,8 @@ class BankRossiiTimelineXmlParser(private val ids: Map<String, String>) {
             success = rates.isNotEmpty(),
             error = null,
             base = rates.values.firstOrNull()?.currency?.iso4217Alpha(),
-            startDate = rates.entries.first().key,
-            endDate = rates.entries.last().key,
+            startDate = rates.entries.firstOrNull()?.key,
+            endDate = rates.entries.lastOrNull()?.key,
             rates = rates,
             provider = ApiProvider.BANK_ROSSII
         )

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup rule: exclude the SharedPreferences file that holds API keys
+  (Database.kt stores prefsOpenExchangeratesApiKey / prefsBrentApiKey in "prefs").
+  Keep the rest of the app data in the backup.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="prefs.xml" />
+</full-backup-content>

@@ -202,7 +202,7 @@ class ExchangeRatesRepository(private val context: Context) {
                         postError(R.string.error_timeout.text())
                     // happens e.g. when device is offline or there's a DNS error
                     is UnknownHostException ->
-                        postError(R.string.error_no_data.text())
+                        postError(R.string.error_no_data.text(), isNoData = true)
                     // received no data - happens e.g. with RUB @ Norges Bank
                     is NoSuchElementException ->
                         postError(R.string.error_empty_response.text())
@@ -240,14 +240,14 @@ class ExchangeRatesRepository(private val context: Context) {
             Database(context).setUpdating(false)
     }
 
-    private fun postError(message: String?) {
+    private fun postError(message: String?, isNoData: Boolean = false) {
         // disable progress bar
         Database(context).setUpdating(false)
 
         // post error
         var errorMessage = "<b>" + (message ?: R.string.error_api_error.text()) + "\u00A0\uD83D\uDC40</b>"
         // tell the user the API can be changed
-        if (message?.contains(R.string.error_no_data.text()) != true)
+        if (!isNoData)
             errorMessage += "\n<br>${R.string.error_try_another_api.text()}\u00A0\uD83E\uDD13"
         liveError.postValue(errorMessage)
 

@@ -52,7 +52,7 @@ class FrankfurterApp : ApiProvider.Api() {
         ).awaitResult(
             moshiDeserializerOf(
                 Moshi.Builder()
-                    .addLast(KotlinJsonAdapterFactory())
+                    .add(KotlinJsonAdapterFactory())
                     .apply {
                         add(FrankfurterAppRatesAdapter(base))
                         add(LocalDateAdapter())
@@ -88,7 +88,7 @@ class FrankfurterApp : ApiProvider.Api() {
         ).awaitResult(
             moshiDeserializerOf(
                 Moshi.Builder()
-                    .addLast(KotlinJsonAdapterFactory())
+                    .add(KotlinJsonAdapterFactory())
                     .apply {
                         add(FrankfurterAppRatesAdapter(base))
                         add(LocalDateAdapter())
