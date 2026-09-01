@@ -49,6 +49,19 @@ It is **not** intended to be used for realtime financial business, rather to be 
 
 Check out [CONTRIBUTING.md](CONTRIBUTING.md), if you are interested in participating.
 
+## Fork-Hinweise (wechselkurse-nxt)
+
+Dieser Fork basiert auf `sal0max/currencies` und trägt eigene Anpassungen.
+
+**v2026.09.01 — P0-Hardening (verifiziert, `assemblePlayDebug` grün):**
+- B1: korrektes Provider-Label (`OPEN_EXCHANGERATES`) im OpenExchangerates-Adapter
+- B3: deprecated Moshi `addLast()` → `add()`
+- B14: `firstOrNull()`/`lastOrNull()` statt `first()`/`last()` im BankRossii-Parser (kein `NoSuchElementException` bei leerer Reihe)
+- B16: Serializable-ProGuard-Keep-Regel (Schutz gegen Release-Crash via Bundle)
+- B4: 401-Check **vor** der Deserialisierung (`awaitResponseResult`) → klare "Invalid API Key"-Meldung
+- B19: locale-robuste Fehlererkennung (`isNoData`-Flag statt fragiler String-Vergleich)
+- Datenschutz: API-Keys (`prefs.xml`) werden nicht mehr in Cloud-Backup / Device-Transfer übertragen
+
 ## License
 
 Copyright 2020 Maximilian Salomon
