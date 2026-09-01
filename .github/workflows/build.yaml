@@ -19,5 +19,5 @@ jobs:
       - name: Lint, test and build the debug apk
         uses: eskatos/gradle-command-action@v2
         with:
-          gradle-version: current
+          gradle-version: 8.14.3
           arguments: check assembleDebug
