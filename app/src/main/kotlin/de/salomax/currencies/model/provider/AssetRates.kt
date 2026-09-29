@@ -20,7 +20,7 @@ import java.time.LocalDate
  * sources and merged into the provider's snapshot (see ExchangeRatesRepository). Every asset
  * lists the sources it can be read from; they are tried in this order until one delivers:
  *
- *  1. [Coinbase] exchange-rates: one request for all crypto + metals, "units per 1 EUR" (latest only)
+ *  1. [Coinbase] exchange-rates: one request for all crypto, "units per 1 EUR" (latest only)
  *  2. [YahooFinance]: USD quote of a future / crypto pair - the only source for commodities
  *     and the only one that can serve a historical date
  *  3. [CoinGecko]: last resort for the few assets it knows (latest only)
@@ -59,11 +59,12 @@ object AssetRates {
         Source(Currency.LINK, coinbase = "LINK", yahoo = "LINK-USD", coinGecko = "chainlink"),
         Source(Currency.AVAX, coinbase = "AVAX", yahoo = "AVAX-USD", coinGecko = "avalanche-2"),
         Source(Currency.XLM, coinbase = "XLM", yahoo = "XLM-USD", coinGecko = "stellar"),
-        // precious metals, per troy ounce. CoinGecko: gold via the PAX Gold token (1 token = 1 oz t)
-        Source(Currency.XAU, coinbase = "XAU", yahoo = "GC=F", coinGecko = "pax-gold"),
-        Source(Currency.XAG, coinbase = "XAG", yahoo = "SI=F"),
-        Source(Currency.XPT, coinbase = "XPT", yahoo = "PL=F"),
-        Source(Currency.XPD, coinbase = "XPD", yahoo = "PA=F"),
+        // precious metals, per troy ounce (Coinbase doesn't list them -> Yahoo futures).
+        // CoinGecko: gold via the PAX Gold token (1 token = 1 oz t)
+        Source(Currency.XAU, yahoo = "GC=F", coinGecko = "pax-gold"),
+        Source(Currency.XAG, yahoo = "SI=F"),
+        Source(Currency.XPT, yahoo = "PL=F"),
+        Source(Currency.XPD, yahoo = "PA=F"),
         // commodities (front-month futures)
         Source(Currency.XBZ, yahoo = BrentOil.YAHOO_SYMBOL),                // USD / barrel
         Source(Currency.XWT, yahoo = "CL=F"),                               // USD / barrel
