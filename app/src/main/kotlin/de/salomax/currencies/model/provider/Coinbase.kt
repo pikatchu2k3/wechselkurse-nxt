@@ -11,14 +11,14 @@ import com.squareup.moshi.JsonWriter
 
 /**
  * Coinbase public exchange-rates API - no API key required. One single request returns the
- * value of "1 EUR" in every crypto currency (and precious metal) Coinbase knows, which is
+ * value of "1 EUR" in every crypto currency Coinbase knows, which is
  * exactly the app's internal "1 EUR = X units" convention.
  *
  * Response shape (GET /v2/exchange-rates?currency=EUR):
  *   { "data": { "currency": "EUR", "rates": { "BTC": "0.0000147", "ETH": "0.00033", ... } } }
  *
  * Reliable and keyless, unlike CoinGecko (which rate-limits free/unauthenticated calls) -
- * used as the primary source for crypto + metals, with Yahoo and CoinGecko as fallbacks.
+ * used as the primary source for crypto, with Yahoo and CoinGecko as fallbacks.
  */
 object Coinbase {
 
