@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- category heading in the rates list: currencies / crypto / precious metals / commodities -->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/textHeader"
+    style="@style/TextAppearance.Material3.LabelLarge"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:letterSpacing="0.08"
+    android:paddingStart="@dimen/margin3x"
+    android:paddingTop="@dimen/margin2x"
+    android:paddingEnd="@dimen/margin3x"
+    android:paddingBottom="@dimen/margin1x"
+    android:textAllCaps="true"
+    android:textColor="?android:attr/textColorSecondary"
+    tools:text="Edelmetalle" />

@@ -10,36 +10,37 @@ import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
 
 /**
- * Coinbase public spot-price API — no API key required. Returns "EUR per 1 unit"
- * (e.g. EUR per 1 BTC, or EUR per 1 troy oz of gold via the PAXG token).
+ * Coinbase public exchange-rates API - no API key required. One single request returns the
+ * value of "1 EUR" in every crypto currency (and precious metal) Coinbase knows, which is
+ * exactly the app's internal "1 EUR = X units" convention.
  *
- * Response shape (GET /v2/prices/{SYMBOL}-EUR/spot):
- *   { "data": { "amount": "68024.08", "base": "BTC", "currency": "EUR" } }
+ * Response shape (GET /v2/exchange-rates?currency=EUR):
+ *   { "data": { "currency": "EUR", "rates": { "BTC": "0.0000147", "ETH": "0.00033", ... } } }
  *
- * Reliable and keyless, unlike CoinGecko (which rate-limits free/unauthenticated
- * calls) — used as the primary source for crypto + gold, with CoinGecko as fallback.
+ * Reliable and keyless, unlike CoinGecko (which rate-limits free/unauthenticated calls) -
+ * used as the primary source for crypto + metals, with Yahoo and CoinGecko as fallbacks.
  */
 object Coinbase {
 
-    private const val BASE_URL = "https://api.coinbase.com/v2/prices/"
+    private const val URL = "https://api.coinbase.com/v2/exchange-rates?currency=EUR"
 
     /**
-     * Gets the current spot price of [symbol] (a Coinbase pair base, e.g. "BTC", "PAXG")
-     * denominated in EUR. Returns EUR per 1 unit, or 0/null on failure. Never throws.
+     * Gets "units per 1 EUR" for every asset code Coinbase lists (e.g. "BTC" -> 0.0000147).
+     * Codes with a missing / unparsable / non-positive value are left out.
      */
-    suspend fun getEurSpot(symbol: String): Result<Float?, FuelError> {
-        return Fuel.get(BASE_URL + symbol + "-EUR/spot")
+    suspend fun getRatesPerEur(): Result<Map<String, Float>, FuelError> {
+        return Fuel.get(URL)
             .header("User-Agent", "Mozilla/5.0")
-            .awaitResult(moshiDeserializerOf(spotAmountAdapter))
+            .awaitResult(moshiDeserializerOf(ratesAdapter))
     }
 
     /*
-     * Extracts the "amount" string and converts it to a Float. Ignores everything else.
+     * Reads data.rates into a map. Everything else is skipped.
      */
-    private val spotAmountAdapter = object : JsonAdapter<Float>() {
+    private val ratesAdapter = object : JsonAdapter<Map<String, Float>>() {
 
-        override fun fromJson(reader: JsonReader): Float? {
-            var amount: Float? = null
+        override fun fromJson(reader: JsonReader): Map<String, Float> {
+            val rates = mutableMapOf<String, Float>()
             reader.beginObject()
             while (reader.hasNext()) {
                 when (reader.nextName()) {
@@ -47,12 +48,19 @@ object Coinbase {
                         reader.beginObject()
                         while (reader.hasNext()) {
                             when (reader.nextName()) {
-                                "amount" -> {
-                                    if (reader.peek() == JsonReader.Token.NULL) {
-                                        reader.skipValue()
-                                    } else {
-                                        amount = reader.nextString().toFloatOrNull()
+                                "rates" -> {
+                                    reader.beginObject()
+                                    while (reader.hasNext()) {
+                                        val code = reader.nextName()
+                                        if (reader.peek() == JsonReader.Token.NULL) {
+                                            reader.skipValue()
+                                        } else {
+                                            reader.nextString().toFloatOrNull()
+                                                ?.takeIf { it > 0f && it.isFinite() }
+                                                ?.let { rates[code] = it }
+                                        }
                                     }
+                                    reader.endObject()
                                 }
                                 else -> reader.skipValue()
                             }
@@ -63,10 +71,10 @@ object Coinbase {
                 }
             }
             reader.endObject()
-            return amount
+            return rates
         }
 
-        override fun toJson(writer: JsonWriter, value: Float?) {
+        override fun toJson(writer: JsonWriter, value: Map<String, Float>?) {
             writer.nullValue()
         }
 

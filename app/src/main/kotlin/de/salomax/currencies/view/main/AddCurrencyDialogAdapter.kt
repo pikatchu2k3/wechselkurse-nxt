@@ -11,10 +11,12 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.imageview.ShapeableImageView
 import de.salomax.currencies.R
+import de.salomax.currencies.model.AssetCategory
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.Rate
 import de.salomax.currencies.util.getSignificantDecimalPlaces
 import de.salomax.currencies.util.hasAppendedCurrencySymbol
+import de.salomax.currencies.util.perUnitLabel
 import de.salomax.currencies.util.toHumanReadableNumber
 
 /**
@@ -66,11 +68,16 @@ class AddCurrencyDialogAdapter(private val context: Context) :
         values = rates?.associate { it.currency to it.value } ?: emptyMap()
         baseEurValue = values[Currency.EUR]?.takeIf { it != 0f } ?: 1f
         groups = (rates?.map { it.currency } ?: emptyList())
-            // XPD/XPT have no data source: keep them hidden
-            .filter { it != Currency.XPD && it != Currency.XPT }
             .distinct()
             .groupBy { groupOf(it) }
-            .mapValues { (_, currencies) -> currencies.sortedBy { it.iso4217Alpha() } }
+            // fiat: by code (that's what people search for). everything else: by name -
+            // the pseudo-codes of commodities (XCF, XSY, ...) mean nothing to anybody
+            .mapValues { (group, currencies) ->
+                if (group == AddGroup.CURRENCIES)
+                    currencies.sortedBy { it.iso4217Alpha() }
+                else
+                    currencies.sortedBy { it.fullName(context) }
+            }
         // the selected category may have no entries (e.g. provider without brent oil) → fall back
         if (groups[selectedGroup].isNullOrEmpty()) {
             selectedGroup = getCategories().firstOrNull() ?: AddGroup.CURRENCIES
@@ -113,17 +120,58 @@ class AddCurrencyDialogAdapter(private val context: Context) :
     }
 
     /**
-     * classify a [Currency] into its picker category: gold/silver → metals, bitcoin → crypto,
-     * brent oil → commodities, everything else → fiat currencies.
-     * XPD/XPT are already filtered out (no data source), but would belong to METALS.
+     * classify a [Currency] into its picker category, see [Currency.category]
      */
     private fun groupOf(currency: Currency): AddGroup {
-        return when (currency) {
-            Currency.XAU, Currency.XAG -> AddGroup.METALS
-            Currency.BTC -> AddGroup.CRYPTO
-            Currency.XBZ -> AddGroup.COMMODITIES
-            else -> AddGroup.CURRENCIES
+        return when (currency.category()) {
+            AssetCategory.FIAT -> AddGroup.CURRENCIES
+            AssetCategory.CRYPTO -> AddGroup.CRYPTO
+            AssetCategory.COMMODITY -> AddGroup.COMMODITIES
+            AssetCategory.METAL -> AddGroup.METALS
         }
+    }
+
+    /**
+     * "€ 1 = $ 1.09" for currencies. Assets are quoted the other way round, as everybody knows
+     * them: the price of one unit ("1 BTC = € 68,024.08", "1 oz t = € 2,912.40"), instead of
+     * "€ 1 = ₿ 0.0000147".
+     */
+    private fun describeRate(currency: Currency): String {
+        val eurSymbol = Currency.EUR.symbol() ?: ""
+        val value = values[currency] ?: 0f
+
+        fun money(number: String) =
+            if (eurSymbol.isEmpty()) number
+            else if (hasAppendedCurrencySymbol(context)) "$number $eurSymbol" else "$eurSymbol $number"
+
+        val text = if (currency.isAsset() && value > 0f) {
+            val price = baseEurValue / value
+            val left = "1 ${currency.perUnitLabel()}"
+            val right = money(
+                price.toHumanReadableNumber(
+                    context,
+                    decimalPlaces = price.getSignificantDecimalPlaces(2),
+                    trim = true
+                )
+            )
+            "$left = $right"
+        } else {
+            val destinationSymbol = currency.symbol() ?: ""
+            val rawDestination = (1.0 / baseEurValue * value).toFloat()
+            val destination = rawDestination.toHumanReadableNumber(
+                context,
+                decimalPlaces = rawDestination.getSignificantDecimalPlaces(2),
+                trim = true
+            )
+            val left =
+                if (eurSymbol.isEmpty()) "1"
+                else if (hasAppendedCurrencySymbol(context)) "1 $eurSymbol" else "$eurSymbol 1"
+            val right =
+                if (destinationSymbol.isEmpty()) destination
+                else if (hasAppendedCurrencySymbol(context)) "$destination $destinationSymbol" else "$destinationSymbol $destination"
+            "$left = $right"
+        }
+        return text.replace("\u200F", "").trim()
     }
 
     inner class ViewHolderEntry(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -141,22 +189,7 @@ class AddCurrencyDialogAdapter(private val context: Context) :
             tvCode.text = currency.iso4217Alpha()
             // full name ("Gold Ounce")
             tvName.text = currency.fullName(context)
-            val sourceSymbol = Currency.EUR.symbol() ?: ""
-            val destinationSymbol = currency.symbol() ?: ""
-            val rawDestination = (1.0 / baseEurValue * (values[currency] ?: 0f)).toFloat()
-            val destination = rawDestination.toString()
-                .toHumanReadableNumber(
-                    context,
-                    decimalPlaces = rawDestination.getSignificantDecimalPlaces(2),
-                    trim = true
-                )
-            val left =
-                if (sourceSymbol.isEmpty()) "1"
-                else if (hasAppendedCurrencySymbol(context)) "1 $sourceSymbol" else "$sourceSymbol 1"
-            val right =
-                if (destinationSymbol.isEmpty()) destination
-                else if (hasAppendedCurrencySymbol(context)) "$destination $destinationSymbol" else "$destinationSymbol $destination"
-            tvRate.text = "$left = $right".replace("\u200F", "").trim()
+            tvRate.text = describeRate(currency)
             // selected state: starred = added to the rates list
             btnStar.setImageDrawable(
                 if (currency in stars) drawableStar else drawableStarEmpty

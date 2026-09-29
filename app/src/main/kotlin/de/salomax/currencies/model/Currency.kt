@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 import com.squareup.moshi.JsonClass
 import de.salomax.currencies.R
+import de.salomax.currencies.util.AssetBadgeDrawable
 
 @Suppress("unused")
 @JsonClass(generateAdapter = false) // see https://stackoverflow.com/a/64085370/421140
@@ -14,7 +15,8 @@ enum class Currency(
     private val symbol: String?,       // $
     private val fullName: Int,         // US dollar
     private val flag: Int?,            // vector drawable: star-spangled banner
-    private val unitLabel: String? = null // "oz t" (troy ounce), "bbl" (barrel) - only for non-flag assets
+    private val unitLabel: String? = null, // "oz t" (troy ounce), "bbl" (barrel) - only for non-flag assets
+    private val category: AssetCategory = AssetCategory.FIAT
 ) {
     AED("AED", 784,  "د.إ",  R.string.name_aed, R.drawable.flag_ae),
     AFN("AFN", 971,  "؋",    R.string.name_afn, R.drawable.flag_af),
@@ -37,7 +39,7 @@ enum class Currency(
     BOB("BOB", 68,   "Bs.",  R.string.name_bob, R.drawable.flag_bo),
     BRL("BRL", 986,  "R$",   R.string.name_brl, R.drawable.flag_br),
     BSD("BSD", 44,   "$",    R.string.name_bsd, R.drawable.flag_bs),
-    BTC("BTC", null, "₿",    R.string.name_btc, null, "₿"),
+    BTC("BTC", null, "₿",    R.string.name_btc, null, "₿", AssetCategory.CRYPTO),
     BTN("BTN", 64,   "Nu.",  R.string.name_btn, R.drawable.flag_bt),
     BWP("BWP", 72,   "P",    R.string.name_bwp, R.drawable.flag_bw),
     BYN("BYN", 933,  "Br",   R.string.name_byn, R.drawable.flag_by),
@@ -177,29 +179,50 @@ enum class Currency(
     VUV("VUV", 548,  "Vt",   R.string.name_vuv, R.drawable.flag_vu),
     WST("WST", 882,  "T",    R.string.name_wst, R.drawable.flag_ws),
     XAF("XAF", 950,  "Fr",   R.string.name_xaf, null),
-    XAG("XAG", 961,  null,   R.string.name_xag, null, "oz t"),
-    XAU("XAU", 959,  null,   R.string.name_xau, null, "oz t"),
-    // crude oil (Brent) - pseudo-code, not a real ISO 4217 currency
-    XBZ("XBZ", null, null,   R.string.name_xbz, null, "bbl"),
+    XAG("XAG", 961,  null,   R.string.name_xag, null, "oz t", AssetCategory.METAL),
+    XAU("XAU", 959,  null,   R.string.name_xau, null, "oz t", AssetCategory.METAL),
+    // commodities - pseudo-codes, not real ISO 4217 currencies
+    XBZ("XBZ", null, null,   R.string.name_xbz, null, "bbl",   AssetCategory.COMMODITY), // crude oil (Brent)
+    XCC("XCC", null, null,   R.string.name_xcc, null, "t",     AssetCategory.COMMODITY), // cocoa
+    XCF("XCF", null, null,   R.string.name_xcf, null, "lb",    AssetCategory.COMMODITY), // coffee
+    XCN("XCN", null, null,   R.string.name_xcn, null, "bu",    AssetCategory.COMMODITY), // corn
+    XCT("XCT", null, null,   R.string.name_xct, null, "lb",    AssetCategory.COMMODITY), // cotton
+    XCU("XCU", null, null,   R.string.name_xcu, null, "lb",    AssetCategory.COMMODITY), // copper
+    XNG("XNG", null, null,   R.string.name_xng, null, "MMBtu", AssetCategory.COMMODITY), // natural gas
+    XSG("XSG", null, null,   R.string.name_xsg, null, "lb",    AssetCategory.COMMODITY), // sugar
+    XSY("XSY", null, null,   R.string.name_xsy, null, "bu",    AssetCategory.COMMODITY), // soybeans
+    XWH("XWH", null, null,   R.string.name_xwh, null, "bu",    AssetCategory.COMMODITY), // wheat
+    XWT("XWT", null, null,   R.string.name_xwt, null, "bbl",   AssetCategory.COMMODITY), // crude oil (WTI)
     XCD("XCD", 951,  "$",    R.string.name_xcd, null),
     XDR("XDR", 960,  null,   R.string.name_xdr, null),
     XOF("XOF", 952,  "Fr",   R.string.name_xof, null),
-    XPD("XPD", 964,  null,   R.string.name_xpd, null, "oz t"),
+    XPD("XPD", 964,  null,   R.string.name_xpd, null, "oz t", AssetCategory.METAL),
     XPF("XPF", 953,  "₣",    R.string.name_xpf, null),
-    XPT("XPT", 962,  null,   R.string.name_xpt, null, "oz t"),
+    XPT("XPT", 962,  null,   R.string.name_xpt, null, "oz t", AssetCategory.METAL),
     YER("YER", 886,  "ر.ي",  R.string.name_yer, R.drawable.flag_ye),
     ZAR("ZAR", 710,  "R",    R.string.name_zar, R.drawable.flag_za),
     ZMW("ZMW", 967,  "ZK",   R.string.name_zmw, R.drawable.flag_zm),
+    // crypto currencies - no ISO 4217 code, no symbol: the ticker is used instead
+    ADA("ADA", null, null,   R.string.name_ada, null, null, AssetCategory.CRYPTO),
+    AVAX("AVAX", null, null, R.string.name_avax, null, null, AssetCategory.CRYPTO),
+    BCH("BCH", null, null,   R.string.name_bch, null, null, AssetCategory.CRYPTO),
+    BNB("BNB", null, null,   R.string.name_bnb, null, null, AssetCategory.CRYPTO),
+    DOGE("DOGE", null, null, R.string.name_doge, null, null, AssetCategory.CRYPTO),
+    DOT("DOT", null, null,   R.string.name_dot, null, null, AssetCategory.CRYPTO),
+    ETH("ETH", null, null,   R.string.name_eth, null, null, AssetCategory.CRYPTO),
+    LINK("LINK", null, null, R.string.name_link, null, null, AssetCategory.CRYPTO),
+    LTC("LTC", null, null,   R.string.name_ltc, null, null, AssetCategory.CRYPTO),
+    SOL("SOL", null, null,   R.string.name_sol, null, null, AssetCategory.CRYPTO),
+    XLM("XLM", null, null,   R.string.name_xlm, null, null, AssetCategory.CRYPTO),
+    XRP("XRP", null, null,   R.string.name_xrp, null, null, AssetCategory.CRYPTO),
     ZWL("ZWL", 932,  "$",    R.string.name_zwl, R.drawable.flag_zw);
 
     companion object {
         fun fromString(value: String): Currency? =
             // filter out these:
-            // metals (no free data source)
-            if (value != "XPD" // palladium
-                && value != "XPT" // platinum
+            if (
                 // superseded
-                && value != "MRO" // Mauritanian ouguiya         (until 2018/01/01)
+                value != "MRO" // Mauritanian ouguiya         (until 2018/01/01)
                 && value != "STD" // São Tomé and Príncipe dobra (until 2018/01/01)
                 && value != "VEF" // Venezuelan bolívar fuerte   (2008/01/01 – 2018/08/20)
                 && value != "CUC" // Cuban convertible peso      (1994 - 2020/01/01)
@@ -246,18 +269,36 @@ enum class Currency(
 
     /**
      * like [flag], but returns a meaningful icon for non-flag assets instead of the gray
-     * flag_unknown globe: e.g. a bitcoin mark for BTC, a gold bar for XAU, an oil barrel for XBZ
+     * flag_unknown globe: e.g. a bitcoin mark for BTC, a gold bar for XAU, an oil barrel for XBZ.
+     * Assets without a dedicated drawable get a colored ticker badge (see [AssetBadgeDrawable]).
      */
-    @Suppress("unused")
     fun icon(context: Context): Drawable {
-        val drawable: Int = when (this) {
+        val drawable: Int? = when (this) {
             BTC -> R.drawable.img_asset_bitcoin
             XAU -> R.drawable.img_asset_gold
             XAG -> R.drawable.img_asset_silver
-            XBZ -> R.drawable.img_asset_oil
-            else -> this.flag ?: R.drawable.flag_unknown
+            XPT -> R.drawable.img_asset_platinum
+            XPD -> R.drawable.img_asset_palladium
+            XBZ, XWT -> R.drawable.img_asset_oil
+            else -> this.flag
         }
-        return ContextCompat.getDrawable(context, drawable)!!
+        return drawable?.let { ContextCompat.getDrawable(context, it) }
+            ?: AssetBadgeDrawable.forCurrency(this)
+            ?: flag(context)
+    }
+
+    /**
+     * the kind of asset this is: fiat currency, crypto, precious metal or commodity
+     */
+    fun category(): AssetCategory {
+        return this.category
+    }
+
+    /**
+     * true for everything that isn't a regular (fiat) currency
+     */
+    fun isAsset(): Boolean {
+        return this.category != AssetCategory.FIAT
     }
 
     /**

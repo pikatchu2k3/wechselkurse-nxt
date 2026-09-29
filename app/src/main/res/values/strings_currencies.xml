@@ -198,4 +198,18 @@
     <string name="name_zar">South African Rand</string>
     <string name="name_zmw">Zambian Kwacha</string>
     <string name="name_zwl">Zimbabwean Dollar</string>
+
+    <!-- crypto currencies -->
+    <string name="name_ada">Cardano</string>
+    <string name="name_avax">Avalanche</string>
+    <string name="name_bch">Bitcoin Cash</string>
+    <string name="name_bnb">BNB</string>
+    <string name="name_doge">Dogecoin</string>
+    <string name="name_dot">Polkadot</string>
+    <string name="name_eth">Ethereum</string>
+    <string name="name_link">Chainlink</string>
+    <string name="name_ltc">Litecoin</string>
+    <string name="name_sol">Solana</string>
+    <string name="name_xlm">Stellar</string>
+    <string name="name_xrp">XRP</string>
 </resources>

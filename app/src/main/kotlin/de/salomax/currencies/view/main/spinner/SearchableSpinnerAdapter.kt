@@ -35,7 +35,7 @@ class SearchableSpinnerAdapter(context: Context, resource: Int) :
 
         // populate
         val item = getItem(position)
-        holder.flag?.setImageDrawable(item?.currency?.flag(context))
+        holder.flag?.setImageDrawable(item?.currency?.icon(context))
         holder.code?.text = item?.currency?.iso4217Alpha()
 
         return v!!

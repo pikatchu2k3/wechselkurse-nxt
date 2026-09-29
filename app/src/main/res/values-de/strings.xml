@@ -38,4 +38,15 @@
     <string name="row_amount">%1$s %2$s</string>
     <string name="tooltip_filter_starred">Nur favorisierte Währungen anzeigen.</string>
     <string name="currency_dropdown_api_hint">Fehlt etwas? Unterschiedliche Datenquellen bieten unterschiedliche Währungen an. In die Einstellungen gehen, um eine andere auszuprobieren!\u00A0\uD83E\uDD17</string>
+    <string name="name_xwt">Rohöl (WTI)</string>
+    <string name="name_xng">Erdgas</string>
+    <string name="name_xcu">Kupfer</string>
+    <string name="name_xwh">Weizen</string>
+    <string name="name_xcn">Mais</string>
+    <string name="name_xsy">Sojabohnen</string>
+    <string name="name_xcf">Kaffee</string>
+    <string name="name_xsg">Zucker</string>
+    <string name="name_xcc">Kakao</string>
+    <string name="name_xct">Baumwolle</string>
+    <string name="rates_list_empty">Noch nichts da.\nMit + Währungen, Krypto, Edelmetalle oder Rohstoffe hinzufügen.</string>
 </resources>

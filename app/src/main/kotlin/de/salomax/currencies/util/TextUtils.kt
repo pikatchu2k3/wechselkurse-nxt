@@ -3,6 +3,8 @@ package de.salomax.currencies.util
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 import de.salomax.currencies.R
+import de.salomax.currencies.model.AssetCategory
+import de.salomax.currencies.model.Currency
 import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
@@ -173,4 +175,17 @@ fun CharSequence.toNumber(): Number? {
         toString()
             .replace("\\s+".toRegex(), "")
     )
+}
+
+// *************************************************************************************************
+
+/**
+ * What "one unit" of this currency / asset is called when quoting its price:
+ * "BTC" for crypto, "oz t" for gold, "bbl" for oil - or simply the code for a regular currency.
+ */
+fun Currency.perUnitLabel(): String {
+    return when (this.category()) {
+        AssetCategory.METAL, AssetCategory.COMMODITY -> this.unitLabel() ?: this.iso4217Alpha()
+        else -> this.iso4217Alpha()
+    }
 }

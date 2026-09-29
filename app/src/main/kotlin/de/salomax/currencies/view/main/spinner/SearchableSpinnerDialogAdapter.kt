@@ -69,7 +69,7 @@ class SearchableSpinnerDialogAdapter(private val context: Context) :
 
         val item = ratesFiltered[position]
         // flag
-        holder.ivFlag.setImageDrawable(item.currency.flag(context))
+        holder.ivFlag.setImageDrawable(item.currency.icon(context))
         // ISO 4217 currency code ("USD")
         holder.tvCode.text = item.currency.iso4217Alpha()
         // full name ("US Dollar")
