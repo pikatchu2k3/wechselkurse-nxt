@@ -16,9 +16,15 @@ class Database(context: Context) {
     companion object {
         /**
          * the currencies the list starts with on first launch, before the user adds their own
-         * (also seeded into the starred set, see [seedDefaultStars])
+         * (also seeded into the starred set, see [seedDefaultStars]): the everyday fiat ones plus
+         * one of each asset class, so the list shows right away what the app covers
          */
-        val DEFAULT_CURRENCIES: Set<Currency> = setOf(Currency.EUR, Currency.USD)
+        val DEFAULT_CURRENCIES: Set<Currency> = setOf(
+            Currency.EUR, Currency.USD, Currency.GBP, Currency.CHF,
+            Currency.BTC, Currency.ETH,
+            Currency.XAU, Currency.XAG,
+            Currency.XBZ
+        )
     }
 
     /*
@@ -150,7 +156,7 @@ class Database(context: Context) {
     private val keyStarsInitialized = "_starsInitialized"
 
     /**
-     * first launch: pre-select the default currency set (EUR + USD), so the list starts small
+     * first launch: pre-select the default currency set, so the list starts small
      * and everything else can be added via the add-currency flow.
      * Runs only once: an empty starred set afterwards is the user's deliberate choice.
      */

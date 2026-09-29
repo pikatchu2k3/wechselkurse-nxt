@@ -69,7 +69,7 @@ class RatesListActivity : BaseActivity() {
         }
 
         // recycler view
-        this.adapter = RatesListAdapter { currency -> openCurrency(currency) }
+        this.adapter = RatesListAdapter(this) { currency -> openCurrency(currency) }
         val listRates = findViewById<RecyclerView>(R.id.listRates)
         listRates.layoutManager = LinearLayoutManager(this)
         listRates.adapter = adapter
@@ -287,6 +287,8 @@ class RatesListActivity : BaseActivity() {
         // rows changed
         viewModel.getRows().observe(this) {
             adapter.setItems(it.rates, it.base, it.baseRateValue)
+            findViewById<View>(R.id.textEmpty).visibility =
+                if (it.rates.isEmpty()) View.VISIBLE else View.GONE
             updateSubtitle()
         }
 

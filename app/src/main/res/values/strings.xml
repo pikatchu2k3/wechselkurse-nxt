@@ -49,4 +49,15 @@
     <string name="currency_dropdown_api_hint">Something missing? Different data providers offer different currencies. Go to the settings to try another one!\u00A0\uD83E\uDD17</string>
 
     <string name="name_xbz">Crude oil (Brent)</string>
+    <string name="name_xwt">Crude oil (WTI)</string>
+    <string name="name_xng">Natural gas</string>
+    <string name="name_xcu">Copper</string>
+    <string name="name_xwh">Wheat</string>
+    <string name="name_xcn">Corn</string>
+    <string name="name_xsy">Soybeans</string>
+    <string name="name_xcf">Coffee</string>
+    <string name="name_xsg">Sugar</string>
+    <string name="name_xcc">Cocoa</string>
+    <string name="name_xct">Cotton</string>
+    <string name="rates_list_empty">Nothing here yet.\nTap + to add currencies, crypto, precious metals or commodities.</string>
 </resources>

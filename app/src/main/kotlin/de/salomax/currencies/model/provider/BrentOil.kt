@@ -13,10 +13,8 @@ import de.salomax.currencies.repository.Database
 
 object BrentOil {
 
-    // keyless default: Yahoo Finance chart endpoint, front-month Brent future BZ=F,
-    // daily closes of the last 5 days. Value = USD per barrel
-    private const val YAHOO_URL =
-        "https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=5d"
+    // keyless default: Yahoo Finance, front-month Brent future BZ=F. Value = USD per barrel
+    const val YAHOO_SYMBOL = "BZ=F"
 
     // keyed official alternative: EIA v2 "Europe Brent Spot Price FOB" (facet duoarea=RBRTE),
     // daily, latest period first. Value = USD per barrel
@@ -51,106 +49,7 @@ object BrentOil {
     }
 
     private suspend fun getFromYahoo(): Result<Float, FuelError> {
-        return Fuel.get(YAHOO_URL)
-            .header("User-Agent", "Mozilla/5.0")
-            .awaitResult(moshiDeserializerOf(yahooLatestCloseAdapter))
-    }
-
-    /*
-     * Yahoo response shape:
-     * {
-     *   "chart": {
-     *     "result": [
-     *       {
-     *         "meta": { ... },
-     *         "timestamp": [ 1724976000, ... ],
-     *         "indicators": {
-     *           "quote": [
-     *             {
-     *               "close": [ 78.12, 78.45, null, 77.98 ]
-     *             }
-     *           ]
-     *         }
-     *       }
-     *     ],
-     *     "error": null
-     *   }
-     * }
-     * Keeps the latest non-null close (the last array element may be null for the open day).
-     */
-    private val yahooLatestCloseAdapter = object : JsonAdapter<Float>() {
-
-        override fun fromJson(reader: JsonReader): Float? {
-            var latestClose: Float? = null
-            reader.beginObject()
-            while (reader.hasNext()) {
-                when (reader.nextName()) {
-                    "chart" -> {
-                        reader.beginObject()
-                        while (reader.hasNext()) {
-                            when (reader.nextName()) {
-                                "result" -> {
-                                    reader.beginArray()
-                                    while (reader.hasNext()) {
-                                        reader.beginObject()
-                                        while (reader.hasNext()) {
-                                            when (reader.nextName()) {
-                                                "indicators" -> {
-                                                    reader.beginObject()
-                                                    while (reader.hasNext()) {
-                                                        when (reader.nextName()) {
-                                                            "quote" -> {
-                                                                reader.beginArray()
-                                                                while (reader.hasNext()) {
-                                                                    reader.beginObject()
-                                                                    while (reader.hasNext()) {
-                                                                        when (reader.nextName()) {
-                                                                            "close" -> {
-                                                                                reader.beginArray()
-                                                                                while (reader.hasNext()) {
-                                                                                    if (reader.peek() == JsonReader.Token.NULL) {
-                                                                                        reader.skipValue()
-                                                                                    } else {
-                                                                                        latestClose = reader.nextDouble().toFloat()
-                                                                                    }
-                                                                                }
-                                                                                reader.endArray()
-                                                                            }
-                                                                            else -> reader.skipValue()
-                                                                        }
-                                                                    }
-                                                                    reader.endObject()
-                                                                }
-                                                                reader.endArray()
-                                                            }
-                                                            else -> reader.skipValue()
-                                                        }
-                                                    }
-                                                    reader.endObject()
-                                                }
-                                                else -> reader.skipValue()
-                                            }
-                                        }
-                                        reader.endObject()
-                                    }
-                                    reader.endArray()
-                                }
-                                else -> reader.skipValue()
-                            }
-                        }
-                        reader.endObject()
-                    }
-                    else -> reader.skipValue()
-                }
-            }
-            reader.endObject()
-            return latestClose
-        }
-
-        override fun toJson(writer: JsonWriter, value: Float?) {
-            writer.nullValue()
-        }
-
+        return YahooFinance.getLatestClose(YAHOO_SYMBOL)
     }
 
     /*

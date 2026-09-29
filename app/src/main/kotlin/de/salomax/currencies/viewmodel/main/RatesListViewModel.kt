@@ -36,7 +36,7 @@ class RatesListViewModel(app: Application) : AndroidViewModel(app) {
     private val mainViewModel: MainViewModel
 
     init {
-        // first launch: the list starts with the default set (EUR + USD only),
+        // first launch: the list starts with the default set (see Database.DEFAULT_CURRENCIES),
         // everything else is added via the add-currency flow
         Database(app).seedDefaultStars()
         mainViewModel = MainViewModel(app)

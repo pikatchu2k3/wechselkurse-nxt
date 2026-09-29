@@ -30,6 +30,7 @@ It is **not** intended to be used for realtime financial business, rather to be 
    * [Bank of Canada](https://www.bankofcanada.ca/rates/exchange/daily-exchange-rates/) provides about 23 currency rates of the Canadian Central Bank
    * The Norwegian Central Bank [Norges Bank](https://www.norges-bank.no/en/topics/Statistics/exchange_rates/) lists some 40 exchange rates
    * The Russian Central Bank [Bank Rossii](https://cbr.ru/eng/currency_base/daily/) gives probably the most reliable data of exchange rates to Russian Ruble. Some 44 exchange rates are listed
+* Besides fiat currencies, the app also covers **crypto currencies** (Bitcoin, Ethereum, XRP, Solana, ...), **precious metals** (gold, silver, platinum, palladium) and **commodities** (Brent & WTI crude oil, natural gas, copper, wheat, corn, soybeans, coffee, sugar, cocoa, cotton). These come from keyless supplementary sources (Coinbase, Yahoo Finance, CoinGecko as fallback) and work with every fiat provider. Assets are shown as prices ("1 BTC = 68,024 EUR", "1 oz t = 2,912 EUR").
 * The UI is simple and pure Material 3 Design.
 * Exchange rate history: Check out the chart for the past year, to see how the currencies have developed.
 * Historical rates: You can use rates from prior dates.
