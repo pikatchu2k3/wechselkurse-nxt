@@ -29,6 +29,13 @@ import java.text.Collator
 import java.time.LocalDate
 import java.time.ZoneId
 
+/**
+ * upper bound for the decimal places in the "1 X ≈ Y Z" footer. An absurd precision turns into an
+ * invalid format string ("%.110f" / "%.nullf"), which Android rejects with
+ * [java.util.IllegalFormatPrecisionException].
+ */
+private const val MAX_FOOTER_DECIMALS = 10
+
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 class MainViewModel(val app: Application, onlyCache: Boolean = false) : AndroidViewModel(app) {
 
@@ -252,29 +259,42 @@ class MainViewModel(val app: Application, onlyCache: Boolean = false) : AndroidV
         }
 
         fun update() {
-            if (exchangeRates != null && baseCurrency != null && destinationCurrency != null) {
-                // base currency
-                val baseValue = exchangeRates!!.rates?.find { it.currency == baseCurrency }?.value
-                // target currency
-                val destinationValue = exchangeRates!!.rates?.find { it.currency == destinationCurrency }?.value
-                val destinationValueCalculated = baseValue?.let { destinationValue?.div(it) }
+            // Resolve everything from ONE snapshot: the three sources are updated independently, so
+            // the rate snapshot can momentarily be older than the selected currencies (e.g. while the
+            // crypto/metal/commodity rates are merged into the freshly fetched fiat-only snapshot).
+            // Formatting a stale snapshot leaves one rate missing, and a format string without a
+            // precision ("%.nullf") makes Android throw IllegalFormatPrecisionException - that killed
+            // the app when a crypto or metal currency was opened. Incomplete states are skipped now:
+            // the next source update carries the consistent snapshot and fills the footer.
+            val rates = exchangeRates?.rates ?: return
+            val base = baseCurrency ?: return
+            val destination = destinationCurrency ?: return
+            // base currency
+            val baseValue = rates.find { it.currency == base }?.value ?: return
+            // target currency
+            val destinationValue = rates.find { it.currency == destination }?.value ?: return
+            val destinationValueCalculated = destinationValue / baseValue
+            if (!destinationValueCalculated.isFinite())
+                return
 
-                // create string
-                this.value = HtmlCompat.fromHtml(
-                    app.getString(
-                        R.string.info_conversion,
-                        "1",
-                        baseCurrency!!.iso4217Alpha(),
-                        String.format(
-                            getLocale(app),
-                            "%.${destinationValueCalculated?.getSignificantDecimalPlaces(2)}f",
-                            destinationValueCalculated
-                        ),
-                        destinationCurrency!!.iso4217Alpha()
+            // create string
+            this.value = HtmlCompat.fromHtml(
+                app.getString(
+                    R.string.info_conversion,
+                    "1",
+                    base.iso4217Alpha(),
+                    String.format(
+                        getLocale(app),
+                        "%.${
+                            destinationValueCalculated.getSignificantDecimalPlaces(2)
+                                .coerceIn(0, MAX_FOOTER_DECIMALS)
+                        }f",
+                        destinationValueCalculated
                     ),
-                    HtmlCompat.FROM_HTML_MODE_LEGACY
-                )
-            }
+                    destination.iso4217Alpha()
+                ),
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )
         }
     }
 

@@ -1,0 +1,11 @@
+Fix: Die App stürzte ab, wenn im Rechner ("Betrag ändern") eine Krypto- oder Metall-Währung
+(z. B. Bitcoin, Gold) geöffnet wurde, während die Kurse neu geladen wurden.
+
+Ursache: Während des Ladens wird zuerst ein Kurs-Paket ohne Krypto/Metalle/Rohstoffe gespeichert.
+Fehlte der Kurs der geöffneten Währung, wurde die Fußzeile "1 X ≈ Y Z" mit einer leeren
+Nachkommastellen-Angabe formatiert ("%.nullf") - das lehnt Android mit
+IllegalFormatPrecisionException ab und die App wurde beendet.
+
+Jetzt wird die Fußzeile nur aus einem vollständigen Kurs-Paket berechnet und beim nächsten
+Update korrekt nachgezogen. Zusätzlich sind kaputte Kurs-Werte (NaN/unendlich) abgesichert
+und die Nachkommastellen begrenzt.

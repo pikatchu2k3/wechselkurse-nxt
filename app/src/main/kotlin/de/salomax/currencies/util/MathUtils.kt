@@ -12,8 +12,15 @@ fun calculateDifference(old: Float?, new: Float?): Float? {
     }
 }
 
+/**
+ * Decimal places needed to show [significantNumbers] significant digits of this value, e.g.
+ * 0.0026 -> 4, 1.5 -> 2.
+ *
+ * Never throws: NaN/Infinity have no decimal places (and `toBigDecimal()` would throw for them),
+ * so they fall back to [significantNumbers].
+ */
 fun Float.getSignificantDecimalPlaces(significantNumbers: Int = 2): Int {
-    if (this >= 0.01) {
+    if (!this.isFinite() || this >= 0.01) {
         return significantNumbers
     }
     val decimalStr = this.toBigDecimal().stripTrailingZeros().toPlainString()

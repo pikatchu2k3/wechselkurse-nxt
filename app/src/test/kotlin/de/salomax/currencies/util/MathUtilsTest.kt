@@ -32,4 +32,21 @@ class MathUtilsTest {
         assertEquals(5, 0.9999991f.getSignificantDecimalPlaces(5))
     }
 
+    /**
+     * NaN/Infinity must not throw (toBe able to format a rate that came in broken) and are reported
+     * with the default amount of decimals
+     */
+    @Test
+    fun getSignificantDecimalPlacesSurvivesBrokenValuesTest() {
+        assertEquals(2, Float.NaN.getSignificantDecimalPlaces(2))
+        assertEquals(2, Float.POSITIVE_INFINITY.getSignificantDecimalPlaces(2))
+        assertEquals(2, Float.NEGATIVE_INFINITY.getSignificantDecimalPlaces(2))
+        // zero is shown without decimals (unchanged behaviour)
+        assertEquals(0, 0f.getSignificantDecimalPlaces(2))
+        // negative values behave like their positive counterpart
+        assertEquals(4, (-0.0026f).getSignificantDecimalPlaces(2))
+        // the smallest float needs 46 decimals - the caller has to clamp that (see MainViewModel)
+        assertEquals(46, Float.MIN_VALUE.getSignificantDecimalPlaces(2))
+    }
+
 }
