@@ -36,7 +36,10 @@ class FrankfurterApp : ApiProvider.Api() {
     override fun descriptionHint(context: Context) =
         null
 
-    override val baseUrl = "https://api.frankfurter.app"
+    // the service moved: the old host answers with a permanent redirect (301) to
+    // https://api.frankfurter.dev/v1/<path>, and our HTTP client does not follow it - it gets the
+    // HTML of the redirect page instead of JSON and fails with "End of input"
+    override val baseUrl = "https://api.frankfurter.dev/v1"
 
     override suspend fun getRates(context: Context?, date: LocalDate?): Result<ExchangeRates, FuelError> {
         // Currency conversions are done relatively to each other - so it basically doesn't matter

@@ -2,7 +2,6 @@ package de.salomax.currencies.model.provider
 
 import android.content.Context
 import android.content.SharedPreferences
-import de.salomax.currencies.model.AssetCategory
 import de.salomax.currencies.model.Currency
 import de.salomax.currencies.model.ExchangeRates
 import de.salomax.currencies.model.Rate
@@ -43,12 +42,40 @@ class AssetRatesTest {
         return rates
     }
 
+    /**
+     * Live fetch of every configured asset, retried once.
+     *
+     * AssetRates swallows a failing source by design, so an incomplete answer cannot be told apart
+     * from an unreachable source - and this runs against keyless third-party APIs from a CI runner.
+     * If the second attempt is still incomplete the test is skipped instead of failed; that the
+     * source table itself covers every asset is guarded offline by [everyAssetCurrencyHasASource].
+     */
+    private fun fetchAllAssetsOrSkip(date: LocalDate? = null): Map<Currency, Float> {
+        val expected = AssetRates.configuredAssets()
+        var rates = fetchOrSkip(snapshot(), date)
+        if (rates.keys.size < expected.size) {
+            rates = fetchOrSkip(snapshot(), date)
+            assumeTrue(
+                "asset sources answered incompletely: ${expected - rates.keys}",
+                rates.keys.size >= expected.size
+            )
+        }
+        return rates
+    }
+
+    @Test
+    fun everyAssetCurrencyHasASource() {
+        // offline guard: the live coverage tests above may skip when a source is unreachable
+        assertEquals(
+            Currency.entries.filter { it.isAsset() }.toSet(),
+            AssetRates.configuredAssets()
+        )
+    }
+
     @Test
     fun latestCoversEveryAsset() {
-        val rates = fetchOrSkip(snapshot())
-        val expected = Currency.entries.filter { it.isAsset() }
-        val missing = expected.filter { it !in rates }
-        assertTrue("missing: $missing", missing.isEmpty())
+        val rates = fetchAllAssetsOrSkip()
+        assertEquals(AssetRates.configuredAssets().size, rates.size)
         // sanity: everything positive and finite
         rates.forEach { (currency, value) -> assertTrue("$currency = $value", value > 0f && value.isFinite()) }
         // sanity: per 1 EUR - a coin is worth far more than 1 EUR, an ounce of gold as well
@@ -88,13 +115,10 @@ class AssetRatesTest {
 
     @Test
     fun historicalDateUsesYahoo() {
-        val rates = fetchOrSkip(snapshot(), LocalDate.now().minusDays(30))
+        val rates = fetchAllAssetsOrSkip(LocalDate.now().minusDays(30))
         assertTrue(rates.getValue(Currency.BTC) < 0.001f)
         assertTrue(Currency.XAG in rates)
         // crypto + metals + commodities all resolved historically
-        assertEquals(
-            Currency.entries.count { it.category() != AssetCategory.FIAT },
-            rates.size
-        )
+        assertEquals(AssetRates.configuredAssets().size, rates.size)
     }
 }

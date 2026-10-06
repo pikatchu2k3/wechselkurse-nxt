@@ -79,6 +79,12 @@ object AssetRates {
         Source(Currency.XCC, yahoo = "CC=F"),                               // USD / metric ton
     )
 
+    /**
+     * The assets at least one supplementary source can deliver. The live tests check their
+     * result against this, so the table itself is guarded by an offline test.
+     */
+    internal fun configuredAssets(): Set<Currency> = SOURCES.map { it.currency }.toSet()
+
     // Yahoo is asked for several symbols at once - but not for all at once
     private const val YAHOO_PARALLELISM = 4
 
