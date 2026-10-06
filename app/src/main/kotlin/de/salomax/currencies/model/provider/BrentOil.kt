@@ -26,7 +26,7 @@ object BrentOil {
      * (see Database.getBrentApiKey), and falls back to the keyless Yahoo endpoint -
      * also whenever the keyed call fails for any reason.
      */
-    suspend fun getUsdPerBarrel(context: Context?): Result<Float, FuelError> {
+    suspend fun getUsdPerBarrel(context: Context?): Result<Float?, FuelError> {
         val apiKey = context?.let { Database(it).getBrentApiKey() }
         if (!apiKey.isNullOrBlank()) {
             val keyed = getFromEia(apiKey)
@@ -48,7 +48,7 @@ object BrentOil {
         ).awaitResult(moshiDeserializerOf(eiaLatestValueAdapter))
     }
 
-    private suspend fun getFromYahoo(): Result<Float, FuelError> {
+    private suspend fun getFromYahoo(): Result<Float?, FuelError> {
         return YahooFinance.getLatestClose(YAHOO_SYMBOL)
     }
 

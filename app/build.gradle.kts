@@ -19,8 +19,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // SemVer
-        versionName = "1.23.1"
-        versionCode = 12301
+        versionName = "1.23.2"
+        versionCode = 12302
         setProperty("archivesBaseName", "$applicationId-v$versionCode")
     }
 

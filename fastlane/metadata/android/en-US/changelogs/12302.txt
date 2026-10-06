@@ -1,0 +1,11 @@
+Fix: Bei einem gewählten historischen Datum waren alle Krypto-Kurse einen Tag zu neu
+(z. B. Bitcoin zeigte den Kurs des Folgetags statt den des gewählten Datums).
+
+Ursache: Die Abfrage fragt Tageskurse bis einschließlich des Datums an. Bei Werten, die rund um
+Mitternacht UTC gehandelt werden (Krypto), fällt der Tageskurs des Folgetags genau auf diese
+Grenze - er stand in der Antwort und wurde als letzter Wert übernommen. Metalle und Rohstoffe
+handeln nicht um Mitternacht UTC, deshalb war dort alles korrekt; sichtbar war es nur bei einem
+historischen Datum, weil dort alle Krypto-Kurse aus dieser einen Abfrage kommen.
+
+Jetzt wird zu jedem Kurs der zugehörige Handelstag ausgewertet und der letzte Tag bis
+einschließlich des angefragten Datums gewählt. Sieben neue Tests decken den Fall ab.
