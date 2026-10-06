@@ -1,10 +1,10 @@
-Fix: Der Kurs-Anbieter "Frankfurter" lieferte keine Kurse mehr.
+Fix: Der Kurs-Anbieter "Frankfurter" konnte zeitweise keine Kurse liefern.
 
-Ursache: Der Dienst ist auf eine neue Adresse umgezogen. Die alte Adresse (api.frankfurter.app)
-antwortet nur noch mit einer Weiterleitung (HTTP 301) auf api.frankfurter.dev/v1. Die App folgt
-dieser Weiterleitung nicht und bekam statt der Kursdaten die HTML-Seite der Weiterleitung zu sehen -
-das Auslesen brach mit "End of input" ab. Wer Frankfurter als Anbieter ausgewählt hatte, bekam
-dadurch keine Kurse mehr.
+Ursache: Der Dienst ist auf eine neue Adresse umgezogen und antwortet auf der alten Adresse
+(api.frankfurter.app) nur noch mit einer dauerhaften Weiterleitung (HTTP 301) auf
+api.frankfurter.dev/v1. Beim Folgen dieser Weiterleitung kam teilweise die Weiterleitungsseite
+statt der Kursdaten an - das Auslesen brach dann mit "End of input" ab, und der Anbieter lieferte
+keine Kurse (in der Testumgebung reproduziert).
 
-Jetzt wird die neue Adresse direkt angesprochen. Betrifft nur diesen einen Anbieter; alle anderen
-Anbieter und alle Krypto-/Metall-/Rohstoff-Kurse waren nicht betroffen.
+Jetzt wird die neue Adresse direkt angesprochen, ohne Weiterleitung. Betrifft nur diesen Anbieter;
+alle anderen Anbieter und die Krypto-/Metall-/Rohstoff-Kurse waren nicht betroffen.
